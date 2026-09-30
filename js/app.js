@@ -267,7 +267,7 @@ function setScore(sp, team, delta) {
   if (delta > 0) goalFlow(sp, team);
 }
 
-/* Commentator: ask for the scorer, then show the goal banner (silent, no speech). */
+/* Commentator: ask for the scorer, then shout it on screen and out loud. */
 function askScorer(teamName) {
   return new Promise(resolve => {
     const dlg = modal(`<form method="dialog"><h2>⚽ جووول!</h2><p>هدف لفريق <b>${esc(teamName)}</b> — من سجّل الهدف؟</p>
@@ -297,6 +297,14 @@ function announceGoal(T, who) {
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
+  if (state.sound && 'speechSynthesis' in window) {
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(who ? `جووووول! هدف سجله ${who}` : 'جووووول!');
+      u.lang = 'ar-SA'; u.rate = 0.95; u.pitch = 1.1;
+      speechSynthesis.speak(u);
+    } catch { /* speech unavailable */ }
+  }
 }
 
 function setStat(sp, team, key, delta) {
