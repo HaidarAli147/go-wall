@@ -425,3 +425,14 @@ dialog td { border-bottom-color: var(--rule); }
   .team[data-side="0"] { border-bottom: 0; }
   .index button { min-width: 140px; }
 }
+
+/* ---------- Logo + English mode ---------- */
+.brand { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(12px, 3vw, 32px); min-width: 0; }
+.logo { width: clamp(96px, 16vw, 210px); height: auto; flex: none; }
+.mast h1 { font-size: clamp(52px, 10vw, 140px); min-width: 0; }
+.tool.lang { color: var(--sun); }
+html[lang="en"] { --display: 'Edu VIC WA NT Hand', 'Cairo', sans-serif; }
+html[lang="en"] .mast h1, html[lang="en"] .notes h2, html[lang="en"] .g-word { font-weight: 700; }
+html[lang="en"] .notes h2 { font-size: clamp(28px, 4vw, 52px); }
+html[lang="en"] .lede { max-width: 40ch; }
+@media (max-width: 860px) { .brand { justify-content: center; } }

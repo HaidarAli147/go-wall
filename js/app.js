@@ -1,6 +1,68 @@
 /* Go Wall — multi-sport scoreboard. No build step, no dependencies. */
 'use strict';
 
+
+/* ================================================================
+   Language (Arabic is the source text; EN maps it to English)
+   ================================================================ */
+const EN = {
+  'الشوط الأول': 'First half', 'الشوط الثاني': 'Second half',
+  'الشوط الإضافي الأول': 'Extra time 1st', 'الشوط الإضافي الثاني': 'Extra time 2nd',
+  'الفريق الأول': 'Team One', 'الفريق الثاني': 'Team Two', 'فريق اليد أ': 'Handball A', 'فريق اليد ب': 'Handball B',
+  'اللاعب الأول': 'Player One', 'اللاعب الثاني': 'Player Two',
+  'لا يوجد ما يمكن التراجع عنه': 'Nothing to undo', 'تم التراجع': 'Undone',
+  'تأكيد': 'Confirm', 'إلغاء': 'Cancel', 'حفظ': 'Save', 'حسنًا': 'OK', 'تخطي': 'Skip',
+  'اكتب الوقت بصيغة': 'Type the time as', 'دقائق:ثواني': 'min:sec', 'مثل': 'e.g.',
+  'اختصارات لوحة المفاتيح': 'Keyboard shortcuts',
+  'تشغيل / إيقاف الساعة': 'Start / stop the clock',
+  'هدف / نقطة للفريق (اللاعب) الأول أو الثاني': 'Goal / point for the first or second team (player)',
+  'إنقاص هدف (كرة القدم واليد)': 'Remove a goal (football, handball)',
+  'تراجع عن آخر إجراء': 'Undo the last action',
+  'وضع العرض على الشاشة الكبيرة': 'Display mode for the big screen',
+  'ملء الشاشة': 'Fullscreen', 'كتم / تشغيل الصوت': 'Mute / unmute sound',
+  'المعلق الصوتي': 'Toggle the commentator', 'هذه القائمة': 'This list',
+  'نصيحة: اضغط على الساعة لتعديل الوقت يدويًا.': 'Tip: click the clock to edit the time by hand.',
+  'انتهى الوقت الأصلي — بدأ الوقت المحتسب بدل الضائع': 'Regular time over — stoppage time',
+  'انتهى الشوط الأول': 'First half over', 'انتهت المباراة': 'Full time',
+  'انتهى الشوط — انتقل للشوط التالي أو أعد الوقت': 'Half over — go to the next half or reset the clock',
+  'جووول!': 'GOAL!', 'هدف لفريق': 'A goal for', 'من سجّل الهدف؟': 'who scored?',
+  'اسم اللاعب (اختياري)': 'Scorer name (optional)', 'إعلان الهدف': 'Announce goal',
+  'هدف سجله': 'Goal scored by', 'جووووول!': 'GOOOOAL!',
+  'تعديل وقت المباراة': 'Edit match time', 'تعديل الوقت المتبقي': 'Edit time remaining',
+  'استُنفدت الأوقات المستقطعة': 'No timeouts left', 'هذا هو الشوط الأخير': 'This is the last half',
+  'انتهت المباراة — ابدأ مباراة جديدة': 'Match over — start a new match', 'يفوز بالمباراة': 'wins the match',
+  'كرة القدم': 'Football', 'كرة اليد': 'Handball', 'التنس': 'Tennis', 'التنس الأرضي': 'Tennis',
+  'تصفير المباراة؟': 'Reset the match?', 'سيتم تصفير نتيجة وساعة': 'This resets the score and clock of',
+  '(تبقى أسماء الفرق وألوانها).': '(team names are kept).', 'نعم، صفّر': 'Yes, reset',
+  'جو وول': 'Go Wall',
+  'اسم الفريق': 'Team name', 'إنقاص': 'Decrease', 'زيادة': 'Increase',
+  'صاحب الأرض': 'Home', 'الضيف': 'Away', 'هدف': 'Goal', 'إنذار': 'Booking', 'طرد': 'Red card',
+  'أخطاء': 'Fouls', 'إنذارات': 'Bookings', 'لا توجد أحداث بعد': 'No events yet',
+  'اضغط لتعديل الوقت': 'Click to edit the time', 'الوقت المنقضي': 'Elapsed time', 'الوقت المتبقي': 'Time remaining',
+  'إيقاف': 'Stop', 'بدء': 'Start', 'د': 'min', 'الشوط': 'Half', 'أحداث المباراة': 'Match events',
+  'وقت مستقطع:': 'Timeouts:', 'وقت مستقطع': 'Timeout', 'إيقاف دقيقتين': '2-min suspension',
+  'إعادة 30د': 'Reset 30 min', 'الشوط التالي': 'Next half',
+  'المجموعات': 'Sets', 'المُرسِل': 'Server', 'تحديد المرسل': 'Set the server', 'إرسال': 'Serve',
+  'اسم اللاعب': 'Player name', '+ نقطة': '+ Point', 'اللاعب': 'Player', 'الأشواط': 'Games', 'النقاط': 'Points',
+  'شوط فاصل': 'Tie-break', 'المجموعة': 'Set', 'أفضل من': 'Best of', 'عدد المجموعات': 'Number of sets',
+  'بدون أفضلية (No-Ad)': 'No-Ad scoring', 'مباراة جديدة': 'New match',
+  'اضغط «إرسال» لتغيير المُرسِل · التبديل يتم تلقائيًا بعد كل شوط · الشوط الفاصل عند 6-6 حتى 7 بفارق نقطتين':
+    'Tap “Serve” to change the server · it switches automatically after each game · tie-break at 6-6, first to 7 by two',
+  'مستبعد': 'Suspended', 'إلغاء الإيقاف': 'Remove suspension', 'لا توجد إيقافات حالية': 'No active suspensions',
+  'وضع العرض — اضغط T أو ✕ للخروج (الاختصارات تعمل)': 'Display mode — press T or ✕ to exit (shortcuts still work)',
+  'المعلق يعمل': 'Commentator on', 'المعلق متوقف': 'Commentator off',
+  'سيتم مسح نتيجة المباراة الحالية.': 'The current match score will be cleared.', 'ابدأ': 'Start',
+};
+const setLangAttrs = () => { document.documentElement.lang = state.lang; document.documentElement.dir = state.lang === 'en' ? 'ltr' : 'rtl'; };
+const L = k => (state.lang === 'en' && k in EN) ? EN[k] : k;
+const DEFAULT_NAMES = ['الفريق الأول', 'الفريق الثاني', 'فريق اليد أ', 'فريق اليد ب', 'اللاعب الأول', 'اللاعب الثاني'];
+const swapName = n => {
+  const en = Object.entries(EN);
+  if (state.lang === 'en') { return DEFAULT_NAMES.includes(n) ? EN[n] : n; }
+  const hit = en.find(([k, v]) => v === n && DEFAULT_NAMES.includes(k));
+  return hit ? hit[0] : n;
+};
+
 /* ================================================================
    Constants & helpers
    ================================================================ */
@@ -36,6 +98,7 @@ function defaults() {
     sport: 'football',
     sound: true,
     voice: true,
+    lang: 'ar',
     fb: { teams: [newTeam('الفريق الأول', '#00f0ff'), newTeam('الفريق الثاني', '#ff2d6f')], period: 0, elapsed: 0, log: [] },
     hb: { teams: [newTeam('فريق اليد أ', '#ff6a00'), newTeam('فريق اليد ب', '#00c2ff')], half: 1, remaining: HB_HALF, pens: [[], []] },
     tn: newTennis(),
@@ -64,7 +127,7 @@ function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
     if (!saved || typeof saved !== 'object') return base;
-    for (const k of ['sport', 'sound', 'voice']) if (k in saved) base[k] = saved[k];
+    for (const k of ['sport', 'sound', 'voice', 'lang']) if (k in saved) base[k] = saved[k];
     for (const k of ['fb', 'hb', 'tn']) if (saved[k]) base[k] = { ...base[k], ...saved[k] };
   } catch { /* corrupted or unavailable storage: start fresh */ }
   return base;
@@ -86,7 +149,7 @@ function pushUndo() {
 }
 function undo() {
   const snap = undoStack.pop();
-  if (!snap) return toast('لا يوجد ما يمكن التراجع عنه');
+  if (!snap) return toast(L('لا يوجد ما يمكن التراجع عنه'));
   const s = JSON.parse(snap);
   const { elapsed, period } = state.fb;
   const { remaining, half } = state.hb;
@@ -94,7 +157,7 @@ function undo() {
   state.hb = { ...s.hb, remaining, half };
   state.tn = s.tn;
   sound('beep');
-  toast('↶ تم التراجع');
+  toast(L('تم التراجع'));
   commit();
 }
 function mutate(fn) { pushUndo(); fn(); commit(); }
@@ -132,7 +195,8 @@ function sound(kind) {
 const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
 const clipUrls = {};
 function clip(id) {
-  return clipUrls[id] || (clipUrls[id] = fetch(`audio/${id}.mp3`)
+  const key = `${state.lang}/${id}`;
+  return clipUrls[key] || (clipUrls[key] = fetch(`audio/${key}.mp3`)
     .then(r => { if (!r.ok) throw new Error(id); return r.blob(); })
     .then(b => URL.createObjectURL(b)));
 }
@@ -189,18 +253,18 @@ function modal(html) {
   if (!dlg.open) dlg.showModal();
   return dlg;
 }
-function confirmBox(title, text, okLabel = 'تأكيد') {
+function confirmBox(title, text, okLabel = L('تأكيد')) {
   return new Promise(resolve => {
     const dlg = modal(`<form method="dialog"><h2>${esc(title)}</h2><p>${esc(text)}</p>
-      <div class="actions"><button class="btn" value="no">إلغاء</button><button class="btn danger" value="yes" autofocus>${esc(okLabel)}</button></div></form>`);
+      <div class="actions"><button class="btn" value="no">${L('إلغاء')}</button><button class="btn danger" value="yes" autofocus>${esc(okLabel)}</button></div></form>`);
     dlg.onclose = () => resolve(dlg.returnValue === 'yes');
   });
 }
 function promptTime(title, current) {
   return new Promise(resolve => {
-    const dlg = modal(`<form method="dialog"><h2>${esc(title)}</h2><p>اكتب الوقت بصيغة <b>دقائق:ثواني</b> مثل 12:30</p>
+    const dlg = modal(`<form method="dialog"><h2>${esc(title)}</h2><p>${L('اكتب الوقت بصيغة')} <b>${L('دقائق:ثواني')}</b> ${L('مثل')} 12:30</p>
       <input type="text" id="time-in" value="${esc(current)}" inputmode="numeric" pattern="[0-9]{1,3}(:[0-5]?[0-9])?" autofocus>
-      <div class="actions"><button class="btn" value="no" formnovalidate>إلغاء</button><button class="btn go" value="yes">حفظ</button></div></form>`);
+      <div class="actions"><button class="btn" value="no" formnovalidate>${L('إلغاء')}</button><button class="btn go" value="yes">${L('حفظ')}</button></div></form>`);
     dlg.onclose = () => {
       if (dlg.returnValue !== 'yes') return resolve(null);
       const m = $('#time-in', dlg).value.trim().match(/^(\d{1,3})(?::([0-5]?\d))?$/);
@@ -209,17 +273,19 @@ function promptTime(title, current) {
   });
 }
 function showHelp() {
-  modal(`<form method="dialog"><h2>اختصارات لوحة المفاتيح</h2><table>
-    <tr><td><kbd>Space</kbd></td><td>تشغيل / إيقاف الساعة</td></tr>
-    <tr><td><kbd>1</kbd> <kbd>2</kbd></td><td>هدف / نقطة للفريق (اللاعب) الأول أو الثاني</td></tr>
-    <tr><td><kbd>Shift</kbd>+<kbd>1</kbd>/<kbd>2</kbd></td><td>إنقاص هدف (كرة القدم واليد)</td></tr>
-    <tr><td><kbd>Z</kbd></td><td>تراجع عن آخر إجراء</td></tr>
-    <tr><td><kbd>T</kbd></td><td>وضع العرض على الشاشة الكبيرة</td></tr>
-    <tr><td><kbd>F</kbd></td><td>ملء الشاشة</td></tr>
-    <tr><td><kbd>M</kbd></td><td>كتم / تشغيل الصوت</td></tr>
-    <tr><td><kbd>?</kbd></td><td>هذه القائمة</td></tr></table>
-    <p>نصيحة: اضغط على الساعة لتعديل الوقت يدويًا.</p>
-    <div class="actions"><button class="btn primary" style="--tc:var(--accent)">حسنًا</button></div></form>`);
+  const row = (k, v) => `<tr><td>${k}</td><td>${L(v)}</td></tr>`;
+  modal(`<form method="dialog"><h2>${L('اختصارات لوحة المفاتيح')}</h2><table>
+    ${row('<kbd>Space</kbd>', 'تشغيل / إيقاف الساعة')}
+    ${row('<kbd>1</kbd> <kbd>2</kbd>', 'هدف / نقطة للفريق (اللاعب) الأول أو الثاني')}
+    ${row('<kbd>Shift</kbd>+<kbd>1</kbd>/<kbd>2</kbd>', 'إنقاص هدف (كرة القدم واليد)')}
+    ${row('<kbd>Z</kbd>', 'تراجع عن آخر إجراء')}
+    ${row('<kbd>T</kbd>', 'وضع العرض على الشاشة الكبيرة')}
+    ${row('<kbd>F</kbd>', 'ملء الشاشة')}
+    ${row('<kbd>V</kbd>', 'المعلق الصوتي')}
+    ${row('<kbd>M</kbd>', 'كتم / تشغيل الصوت')}
+    ${row('<kbd>?</kbd>', 'هذه القائمة')}</table>
+    <p>${L('نصيحة: اضغط على الساعة لتعديل الوقت يدويًا.')}</p>
+    <div class="actions"><button class="btn primary" style="--tc:var(--accent)">${L('حسنًا')}</button></div></form>`);
 }
 
 /* ================================================================
@@ -241,7 +307,7 @@ function tick() {
     if (before < end && f.elapsed >= end && fbNotified.period !== f.period) {
       fbNotified.period = f.period;
       sound('whistle');
-      toast('⏱ انتهى الوقت الأصلي — بدأ الوقت المحتسب بدل الضائع');
+      toast(L('انتهى الوقت الأصلي — بدأ الوقت المحتسب بدل الضائع'));
       speak(['regular_end'], true);
     }
     updateFbClock();
@@ -256,7 +322,7 @@ function tick() {
       h.remaining = 0;
       run.hb = false;
       sound('buzzer');
-      toast(h.half === 1 ? '🔔 انتهى الشوط الأول' : '🏁 انتهت المباراة');
+      toast(h.half === 1 ? L('انتهى الشوط الأول') : L('انتهت المباراة'));
       speak([h.half === 1 ? 'half_end' : 'match_end', ...scoreSeq('hb')], true);
       commit();
       return;
@@ -296,13 +362,12 @@ function fbLabel() {
 function toggleClock() {
   const sp = state.sport === 'football' ? 'fb' : state.sport === 'handball' ? 'hb' : null;
   if (!sp) return;
-  if (sp === 'hb' && !run.hb && state.hb.remaining <= 0) return toast('انتهى الشوط — انتقل للشوط التالي أو أعد الوقت');
+  if (sp === 'hb' && !run.hb && state.hb.remaining <= 0) return toast(L('انتهى الشوط — انتقل للشوط التالي أو أعد الوقت'));
   run[sp] = !run[sp];
   lastTick = performance.now();
   sound(run[sp] ? 'whistle' : 'beep');
   if (run[sp]) {
     const fresh = sp === 'fb' ? state.fb.elapsed === FB_PERIODS[state.fb.period].start * 60000 : state.hb.remaining === HB_HALF;
-    const half = sp === 'fb' ? FB_PERIODS[state.fb.period].name : (state.hb.half === 1 ? 'الشوط الأول' : 'الشوط الثاني');
     speak(fresh ? ['kick_off', sp === 'fb' ? `period_${state.fb.period}` : `period_${state.hb.half - 1}`] : ['resume'], true);
   } else speak(['paused']);
   render();
@@ -326,10 +391,10 @@ function setScore(sp, team, delta) {
 /* Commentator: ask for the scorer, then shout it on screen and out loud. */
 function askScorer(teamName) {
   return new Promise(resolve => {
-    const dlg = modal(`<form method="dialog"><h2>جووول!</h2><p>هدف لفريق <b>${esc(teamName)}</b> — من سجّل الهدف؟</p>
-      <input type="text" id="scorer-in" maxlength="30" placeholder="اسم اللاعب (اختياري)" dir="rtl" autofocus autocomplete="off"
+    const dlg = modal(`<form method="dialog"><h2>${L('جووول!')}</h2><p>${L('هدف لفريق')} <b>${esc(teamName)}</b> — ${L('من سجّل الهدف؟')}</p>
+      <input type="text" id="scorer-in" maxlength="30" placeholder="${L('اسم اللاعب (اختياري)')}" dir="auto" autofocus autocomplete="off"
         style="font:700 20px Cairo,sans-serif;letter-spacing:0">
-      <div class="actions"><button class="btn" value="skip" formnovalidate>تخطي</button><button class="btn go" value="ok">إعلان الهدف</button></div></form>`);
+      <div class="actions"><button class="btn" value="skip" formnovalidate>${L('تخطي')}</button><button class="btn go" value="ok">${L('إعلان الهدف')}</button></div></form>`);
     dlg.onclose = () => resolve(dlg.returnValue === 'ok' ? $('#scorer-in', dlg).value.trim() : '');
   });
 }
@@ -346,11 +411,11 @@ async function goalFlow(sp, team) {
 let goalTimer = 0;
 function announceGoal(sp, team, who) {
   const T = state[sp].teams[team];
-  const line = `هدف سجله ${who || '----------'}`;
+  const line = `${L('هدف سجله')} ${who || '----------'}`;
   let el = $('#goal-banner');
   if (!el) { el = document.createElement('div'); el.id = 'goal-banner'; el.setAttribute('role', 'alert'); document.body.append(el); }
   el.dataset.side = team;
-  el.innerHTML = `<div class="g-word">جووووول!</div><div class="g-line">${esc(line)}</div><div class="g-team">${esc(T.name)}</div>`;
+  el.innerHTML = `<div class="g-word">${L('جووووول!')}</div><div class="g-line">${esc(line)}</div><div class="g-team">${esc(T.name)}</div>`;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
@@ -398,17 +463,17 @@ async function editClock() {
   const sp = state.sport;
   if (sp === 'football') {
     const cur = fmt(state.fb.elapsed);
-    const ms = await promptTime('تعديل وقت المباراة', cur);
+    const ms = await promptTime(L('تعديل وقت المباراة'), cur);
     if (ms != null) { state.fb.elapsed = ms; fbNotified.period = -1; commit(); }
   } else if (sp === 'handball') {
-    const ms = await promptTime('تعديل الوقت المتبقي', fmt(state.hb.remaining));
+    const ms = await promptTime(L('تعديل الوقت المتبقي'), fmt(state.hb.remaining));
     if (ms != null) { setHbRemaining(Math.min(ms, HB_HALF)); commit(); }
   }
 }
 
 function hbTimeout(team) {
   const T = state.hb.teams[team];
-  if (T.timeouts <= 0) return toast('استُنفدت الأوقات المستقطعة');
+  if (T.timeouts <= 0) return toast(L('استُنفدت الأوقات المستقطعة'));
   mutate(() => { T.timeouts--; });
   run.hb = false;
   sound('whistle');
@@ -425,7 +490,7 @@ function hbRemovePenalty(team, idx) {
 }
 function hbNextHalf() {
   const h = state.hb;
-  if (h.half >= 2) return toast('هذا هو الشوط الأخير');
+  if (h.half >= 2) return toast(L('هذا هو الشوط الأخير'));
   run.hb = false;
   // Carry active suspensions across the break with their remaining time intact.
   h.pens = h.pens.map(list => list.map(e => HB_HALF - (h.remaining - e)).filter(e => e < HB_HALF));
@@ -462,7 +527,7 @@ function tbServer(t) {
 
 function tnPoint(p) {
   const t = state.tn;
-  if (t.winner !== null) return toast('انتهت المباراة — ابدأ مباراة جديدة');
+  if (t.winner !== null) return toast(L('انتهت المباراة — ابدأ مباراة جديدة'));
   pushUndo();
   const o = 1 - p;
   t.pts[p]++;
@@ -518,7 +583,7 @@ function tnFinishSet(p, viaTiebreak) {
   t._ev = ['set_for', 'p' + (p + 1), NUM(entry.g[0]), 'vs', NUM(entry.g[1])];
   if (t.sets[p] >= Math.ceil(t.bestOf / 2)) {
     t.winner = p;
-    toast(`🏆 ${t.names[p]} يفوز بالمباراة`);
+    toast(`${t.names[p]} ${L('يفوز بالمباراة')}`);
   }
 }
 
@@ -527,7 +592,7 @@ function tnFinishSet(p, viaTiebreak) {
    ================================================================ */
 async function resetCurrent() {
   const names = { football: 'كرة القدم', handball: 'كرة اليد', tennis: 'التنس' };
-  const ok = await confirmBox('تصفير المباراة؟', `سيتم تصفير نتيجة وساعة ${names[state.sport]} (تبقى أسماء الفرق وألوانها).`, 'نعم، صفّر');
+  const ok = await confirmBox(L('تصفير المباراة؟'), `${L('سيتم تصفير نتيجة وساعة')} ${L(names[state.sport])} ${L('(تبقى أسماء الفرق وألوانها).')}`, L('نعم، صفّر'));
   if (!ok) return;
   pauseAll();
   const d = defaults();
@@ -553,7 +618,7 @@ function render() {
   }
   $('#voice-btn').classList.toggle('off', !state.voice);
   $('#sound-btn').classList.toggle('off', !state.sound);
-  document.title = `جو وول | ${state.sport === 'tennis' ? 'التنس' : state.sport === 'football' ? 'كرة القدم' : 'كرة اليد'}`;
+  document.title = `${L('جو وول')} | ${L(state.sport === 'tennis' ? 'التنس' : state.sport === 'football' ? 'كرة القدم' : 'كرة اليد')}`;
 
   if (sp === 'football') $('#panel-football').innerHTML = footballHTML();
   else if (sp === 'handball') $('#panel-handball').innerHTML = handballHTML();
@@ -568,13 +633,13 @@ function render() {
 }
 
 function nameField(sp, i, T) {
-  return `<input class="name-input" data-name="${sp}" data-team="${i}" value="${esc(T.name)}" maxlength="24" aria-label="اسم الفريق ${i + 1}">`;
+  return `<input class="name-input" data-name="${sp}" data-team="${i}" value="${esc(T.name)}" maxlength="24" aria-label="${L('اسم الفريق')} ${i + 1}">`;
 }
 function stat(label, sp, i, key, value) {
   return `<div class="stat"><span class="lbl">${label}</span>
-    <button class="mini" data-action="stat" data-sport="${sp}" data-team="${i}" data-key="${key}" data-delta="-1" aria-label="إنقاص">−</button>
+    <button class="mini" data-action="stat" data-sport="${sp}" data-team="${i}" data-key="${key}" data-delta="-1" aria-label="${L('إنقاص')}">−</button>
     <b>${value}</b>
-    <button class="mini" data-action="stat" data-sport="${sp}" data-team="${i}" data-key="${key}" data-delta="1" aria-label="زيادة">+</button></div>`;
+    <button class="mini" data-action="stat" data-sport="${sp}" data-team="${i}" data-key="${key}" data-delta="1" aria-label="${L('زيادة')}">+</button></div>`;
 }
 
 function footballHTML() {
@@ -582,39 +647,39 @@ function footballHTML() {
   const card = i => {
     const T = f.teams[i];
     return `<article class="box team" data-side="${i}">
-      <div class="team-head">${nameField('fb', i, T)}<span class="chip">${i === 0 ? 'صاحب الأرض' : 'الضيف'}</span></div>
+      <div class="team-head">${nameField('fb', i, T)}<span class="chip">${L(i === 0 ? 'صاحب الأرض' : 'الضيف')}</span></div>
       <div class="score" data-bump="fb-${i}">${T.score}</div>
       <div class="btn-row">
-        <button class="btn primary big" data-action="score" data-sport="fb" data-team="${i}" data-delta="1">+1 هدف</button>
+        <button class="btn primary big" data-action="score" data-sport="fb" data-team="${i}" data-delta="1">+1 ${L('هدف')}</button>
         <button class="btn big" data-action="score" data-sport="fb" data-team="${i}" data-delta="-1">&lrm;−1</button>
       </div>
       <div class="stats">
-        ${stat('أخطاء', 'fb', i, 'fouls', T.fouls)}
-        ${stat('إنذارات', 'fb', i, 'yellow', T.yellow)}
-        ${stat('طرد', 'fb', i, 'red', T.red)}
+        ${stat(L('أخطاء'), 'fb', i, 'fouls', T.fouls)}
+        ${stat(L('إنذارات'), 'fb', i, 'yellow', T.yellow)}
+        ${stat(L('طرد'), 'fb', i, 'red', T.red)}
       </div></article>`;
   };
   const log = f.log.length
-    ? f.log.slice(0, 30).map(e => `<li data-side="${e.team}"><b>${esc(e.label)}</b><span><strong>${{ '⚽': 'هدف', '🟨': 'إنذار', '🟥': 'طرد' }[e.icon] || ''}</strong>${esc(f.teams[e.team].name)}${e.who ? ' — ' + esc(e.who) : ''}</span></li>`).join('')
-    : '<span class="empty">لا توجد أحداث بعد</span>';
+    ? f.log.slice(0, 30).map(e => `<li data-side="${e.team}"><b>${esc(e.label)}</b><span><strong>${L({ '⚽': 'هدف', '🟨': 'إنذار', '🟥': 'طرد' }[e.icon] || '')}</strong>${esc(f.teams[e.team].name)}${e.who ? ' — ' + esc(e.who) : ''}</span></li>`).join('')
+    : `<span class="empty">${L('لا توجد أحداث بعد')}</span>`;
   return `
     <div class="box statusbar" style="--sc:var(--accent)">
-      <div class="period"><span class="dot ${run.fb ? 'live' : ''}"></span>${FB_PERIODS[f.period].name}</div>
-      <div class="clock-wrap" data-action="edit-clock" title="اضغط لتعديل الوقت">
+      <div class="period"><span class="dot ${run.fb ? 'live' : ''}"></span>${L(FB_PERIODS[f.period].name)}</div>
+      <div class="clock-wrap" data-action="edit-clock" title="${L('اضغط لتعديل الوقت')}">
         <span class="clock" id="fb-clock">00:00</span>
-        <div class="clock-sub"><span>الوقت المنقضي</span><span class="extra" id="fb-extra"></span></div>
+        <div class="clock-sub"><span>${L('الوقت المنقضي')}</span><span class="extra" id="fb-extra"></span></div>
       </div>
       <div class="clock-ctl">
-        <button class="btn ${run.fb ? 'pause' : 'go'}" data-action="toggle">${run.fb ? 'إيقاف' : 'بدء'}</button>
-        <button class="btn sm" data-action="nudge" data-min="-1">&lrm;−1 د</button>
-        <button class="btn sm" data-action="nudge" data-min="1">&lrm;+1 د</button>
-        <select class="sel" data-period aria-label="الشوط">
-          ${FB_PERIODS.map((p, i) => `<option value="${i}" ${i === f.period ? 'selected' : ''}>${p.name} (${p.len}د)</option>`).join('')}
+        <button class="btn ${run.fb ? 'pause' : 'go'}" data-action="toggle">${run.fb ? L('إيقاف') : L('بدء')}</button>
+        <button class="btn sm" data-action="nudge" data-min="-1">&lrm;−1 ${L('د')}</button>
+        <button class="btn sm" data-action="nudge" data-min="1">&lrm;+1 ${L('د')}</button>
+        <select class="sel" data-period aria-label="${L('الشوط')}">
+          ${FB_PERIODS.map((p, i) => `<option value="${i}" ${i === f.period ? 'selected' : ''}>${L(p.name)} (${p.len}${L('د')})</option>`).join('')}
         </select>
       </div>
     </div>
     <div class="grid2">${card(0)}${card(1)}</div>
-    <div class="box log"><h3>أحداث المباراة</h3><ul>${log}</ul></div>`;
+    <div class="box log"><h3>${L('أحداث المباراة')}</h3><ul>${log}</ul></div>`;
 }
 
 function handballHTML() {
@@ -622,30 +687,30 @@ function handballHTML() {
   const card = i => {
     const T = h.teams[i];
     return `<article class="box team" data-side="${i}">
-      <div class="team-head">${nameField('hb', i, T)}<span class="pill">وقت مستقطع: <b>${T.timeouts}</b>/${HB_TIMEOUTS}</span></div>
+      <div class="team-head">${nameField('hb', i, T)}<span class="pill">${L('وقت مستقطع:')} <b>${T.timeouts}</b>/${HB_TIMEOUTS}</span></div>
       <div class="score" data-bump="hb-${i}">${T.score}</div>
       <div class="btn-row">
-        <button class="btn primary big" data-action="score" data-sport="hb" data-team="${i}" data-delta="1">+1 هدف</button>
+        <button class="btn primary big" data-action="score" data-sport="hb" data-team="${i}" data-delta="1">+1 ${L('هدف')}</button>
         <button class="btn big" data-action="score" data-sport="hb" data-team="${i}" data-delta="-1">&lrm;−1</button>
       </div>
       <div class="row-2">
-        <button class="btn" data-action="hb-timeout" data-team="${i}" ${T.timeouts ? '' : 'disabled'}>وقت مستقطع</button>
-        <button class="btn danger" data-action="hb-penalty" data-team="${i}">إيقاف دقيقتين</button>
+        <button class="btn" data-action="hb-timeout" data-team="${i}" ${T.timeouts ? '' : 'disabled'}>${L('وقت مستقطع')}</button>
+        <button class="btn danger" data-action="hb-penalty" data-team="${i}">${L('إيقاف دقيقتين')}</button>
       </div>
       <div class="pens" id="pens-${i}"></div>
     </article>`;
   };
   return `
     <div class="box statusbar" style="--sc:var(--orange)">
-      <div class="period"><span class="dot ${run.hb ? 'live' : ''}"></span>كرة اليد · ${h.half === 1 ? 'الشوط الأول' : 'الشوط الثاني'}</div>
-      <div class="clock-wrap" data-action="edit-clock" title="اضغط لتعديل الوقت">
+      <div class="period"><span class="dot ${run.hb ? 'live' : ''}"></span>${L('كرة اليد')} · ${L(h.half === 1 ? 'الشوط الأول' : 'الشوط الثاني')}</div>
+      <div class="clock-wrap" data-action="edit-clock" title="${L('اضغط لتعديل الوقت')}">
         <span class="clock" id="hb-clock">30:00</span>
-        <div class="clock-sub"><span>الوقت المتبقي</span></div>
+        <div class="clock-sub"><span>${L('الوقت المتبقي')}</span></div>
       </div>
       <div class="clock-ctl">
-        <button class="btn ${run.hb ? 'pause' : 'go'}" data-action="toggle">${run.hb ? 'إيقاف' : 'بدء'}</button>
-        <button class="btn sm" data-action="hb-reset-half">إعادة 30د</button>
-        <button class="btn sm" data-action="hb-next-half" ${h.half >= 2 ? 'disabled' : ''}>الشوط التالي</button>
+        <button class="btn ${run.hb ? 'pause' : 'go'}" data-action="toggle">${run.hb ? L('إيقاف') : L('بدء')}</button>
+        <button class="btn sm" data-action="hb-reset-half">${L('إعادة 30د')}</button>
+        <button class="btn sm" data-action="hb-next-half" ${h.half >= 2 ? 'disabled' : ''}>${L('الشوط التالي')}</button>
       </div>
     </div>
     <div class="grid2">${card(0)}${card(1)}</div>`;
@@ -661,37 +726,37 @@ function tennisHTML() {
       return `<span class="tn-set ${won ? 'won' : ''}">${s.g[i]}${sup}</span>`;
     }).join('');
     const need = Math.ceil(t.bestOf / 2);
-    const pips = t.bestOf > 1 ? `<div class="pips" title="المجموعات">${Array.from({ length: need }, (_, k) => `<span class="pip ${k < t.sets[i] ? 'on' : ''}"></span>`).join('')}</div>` : '';
+    const pips = t.bestOf > 1 ? `<div class="pips" title="${L('المجموعات')}">${Array.from({ length: need }, (_, k) => `<span class="pip ${k < t.sets[i] ? 'on' : ''}"></span>`).join('')}</div>` : '';
     return `<div class="tn-row ${serving ? 'serving' : ''}" data-side="${i}">
-      <button class="serve-btn ${serving ? 'on' : ''}" data-action="tn-server" data-p="${i}" title="المُرسِل" aria-label="تحديد المرسل">إرسال</button>
-      <input class="name-input" data-tname="${i}" value="${esc(t.names[i])}" maxlength="24" aria-label="اسم اللاعب ${i + 1}">
+      <button class="serve-btn ${serving ? 'on' : ''}" data-action="tn-server" data-p="${i}" title="${L('المُرسِل')}" aria-label="${L('تحديد المرسل')}">${L('إرسال')}</button>
+      <input class="name-input" data-tname="${i}" value="${esc(t.names[i])}" maxlength="24" aria-label="${L('اسم اللاعب')} ${i + 1}">
       <div class="tn-sets">${sets}</div>
       <div class="tn-games" data-bump="tn-g${i}">${t.games[i]}</div>
       <div><div class="tn-points" data-bump="tn-p${i}">${tnLabel(i)}</div>${pips}</div>
-      <button class="btn primary big" style="font-size:18px" data-action="tn-point" data-p="${i}" ${t.winner !== null ? 'disabled' : ''}>+ نقطة</button>
+      <button class="btn primary big" style="font-size:18px" data-action="tn-point" data-p="${i}" ${t.winner !== null ? 'disabled' : ''}>${L('+ نقطة')}</button>
     </div>`;
   };
-  const head = `<div class="tn-head"><span></span><span>اللاعب</span><span>المجموعات</span><span>الأشواط</span><span>النقاط</span><span></span></div>`;
-  const banner = t.winner !== null ? `<div class="winner">${esc(t.names[t.winner])} يفوز بالمباراة.</div>` : '';
-  const stateLabel = t.tiebreak ? '<span class="badge-tb">شوط فاصل</span>' : '';
+  const head = `<div class="tn-head"><span></span><span>${L('اللاعب')}</span><span>${L('المجموعات')}</span><span>${L('الأشواط')}</span><span>${L('النقاط')}</span><span></span></div>`;
+  const banner = t.winner !== null ? `<div class="winner">${esc(t.names[t.winner])} ${L('يفوز بالمباراة')}.</div>` : '';
+  const stateLabel = t.tiebreak ? `<span class="badge-tb">${L('شوط فاصل')}</span>` : '';
   return `
     <div class="box">
       <div class="tn-bar">
-        <div class="period"><span class="dot live"></span>التنس الأرضي ${stateLabel}</div>
+        <div class="period"><span class="dot live"></span>${L('التنس الأرضي')} ${stateLabel}</div>
         <div class="tn-opts">
-          <span>المجموعة <b>${Math.min(t.history.length + 1, 9)}</b></span>
-          <label>أفضل من
-            <select class="sel" data-bestof aria-label="عدد المجموعات">
+          <span>${L('المجموعة')} <b>${Math.min(t.history.length + 1, 9)}</b></span>
+          <label>${L('أفضل من')}
+            <select class="sel" data-bestof aria-label="${L('عدد المجموعات')}">
               ${[1, 3, 5].map(n => `<option value="${n}" ${n === t.bestOf ? 'selected' : ''}>${n}</option>`).join('')}
             </select></label>
-          <label><input type="checkbox" data-noad ${t.noAd ? 'checked' : ''}> بدون أفضلية (No-Ad)</label>
-          <button class="btn sm" data-action="tn-new">مباراة جديدة</button>
+          <label><input type="checkbox" data-noad ${t.noAd ? 'checked' : ''}> ${L('بدون أفضلية (No-Ad)')}</label>
+          <button class="btn sm" data-action="tn-new">${L('مباراة جديدة')}</button>
         </div>
       </div>
       <div class="tn-board">${head}${row(0)}${row(1)}</div>
     </div>
     ${banner}
-    <p class="tn-caption">اضغط «إرسال» لتغيير المُرسِل · التبديل يتم تلقائيًا بعد كل شوط · الشوط الفاصل عند 6-6 حتى 7 بفارق نقطتين</p>`;
+    <p class="tn-caption">${L('اضغط «إرسال» لتغيير المُرسِل · التبديل يتم تلقائيًا بعد كل شوط · الشوط الفاصل عند 6-6 حتى 7 بفارق نقطتين')}</p>`;
 }
 
 /* Cheap, targeted updates called every tick (no full re-render). */
@@ -717,9 +782,9 @@ function renderPenalties() {
     if (!box) continue;
     const list = state.hb.pens[i];
     box.innerHTML = list.length
-      ? list.map((e, k) => `<div class="pen"><span>مستبعد ${k + 1}</span><span>${fmt(Math.ceil((state.hb.remaining - e) / 1000) * 1000)}</span>
-          <button data-action="hb-pen-del" data-team="${i}" data-idx="${k}" aria-label="إلغاء الإيقاف">✕</button></div>`).join('')
-      : '<span class="empty" style="text-align:center">لا توجد إيقافات حالية</span>';
+      ? list.map((e, k) => `<div class="pen"><span>${L('مستبعد')} ${k + 1}</span><span>${fmt(Math.ceil((state.hb.remaining - e) / 1000) * 1000)}</span>
+          <button data-action="hb-pen-del" data-team="${i}" data-idx="${k}" aria-label="${L('إلغاء الإيقاف')}">✕</button></div>`).join('')
+      : `<span class="empty" style="text-align:center">${L('لا توجد إيقافات حالية')}</span>`;
   }
 }
 
@@ -736,7 +801,7 @@ async function setWake(on) {
 function toggleTv() {
   const on = document.body.classList.toggle('tv');
   setWake(on);
-  if (on) toast('وضع العرض — اضغط T أو ✕ للخروج (الاختصارات تعمل)');
+  if (on) toast(L('وضع العرض — اضغط T أو ✕ للخروج (الاختصارات تعمل)'));
 }
 function toggleFullscreen() {
   if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
@@ -755,7 +820,13 @@ const actions = {
   sport: d => switchSport(d.sport),
   undo,
   sound: () => { state.sound = !state.sound; commit(); if (state.sound) sound('beep'); },
-  voice: () => { state.voice = !state.voice; if (!state.voice) stopSpeech(); commit(); toast(state.voice ? '🎙️ المعلق يعمل' : '🎙️ المعلق متوقف'); speak(['voice_on'], true); },
+  lang: () => {
+    state.lang = state.lang === 'en' ? 'ar' : 'en';
+    ['fb', 'hb'].forEach(k => state[k].teams.forEach(tm => { tm.name = swapName(tm.name); }));
+    state.tn.names = state.tn.names.map(swapName);
+    applyStaticLang(); stopSpeech(); commit();
+  },
+  voice: () => { state.voice = !state.voice; if (!state.voice) stopSpeech(); commit(); toast(state.voice ? L('المعلق يعمل') : L('المعلق متوقف')); speak(['voice_on'], true); },
   tv: toggleTv,
   fullscreen: toggleFullscreen,
   help: showHelp,
@@ -772,7 +843,7 @@ const actions = {
   'hb-reset-half': hbResetHalf,
   'tn-point': d => tnPoint(+d.p),
   'tn-server': d => mutate(() => { state.tn.server = +d.p; if (state.tn.tiebreak && state.tn.tbCount === 0) state.tn.tbStart = +d.p; }),
-  'tn-new': async () => { if (await confirmBox('مباراة جديدة؟', 'سيتم مسح نتيجة المباراة الحالية.', 'ابدأ')) { state.tn = newTennis(state.tn); undoStack = []; commit(); } },
+  'tn-new': async () => { if (await confirmBox(L('مباراة جديدة'), L('سيتم مسح نتيجة المباراة الحالية.'), L('ابدأ'))) { state.tn = newTennis(state.tn); undoStack = []; commit(); } },
 };
 
 document.addEventListener('click', e => {
@@ -827,10 +898,24 @@ document.addEventListener('click', e => { if (e.target.closest('#goal-banner')) 
 window.addEventListener('pagehide', saveNow);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); else lastTick = performance.now(); });
 
+/* Static page text carries its English in data-en / data-en-title (see index.html). */
+function applyStaticLang() {
+  setLangAttrs();
+  $$('[data-en]').forEach(el => {
+    if (el.dataset.ar === undefined) el.dataset.ar = el.innerHTML;
+    el.innerHTML = state.lang === 'en' ? el.dataset.en : el.dataset.ar;
+  });
+  $$('[data-en-title]').forEach(el => {
+    if (el.dataset.arTitle === undefined) el.dataset.arTitle = el.title;
+    el.title = state.lang === 'en' ? el.dataset.enTitle : el.dataset.arTitle;
+  });
+}
+
 /* ================================================================
    Boot
    ================================================================ */
 setInterval(tick, 100);
+applyStaticLang();
 render();
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

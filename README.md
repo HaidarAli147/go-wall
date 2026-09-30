@@ -19,9 +19,14 @@ A pro multi-sport scoreboard for **football, handball and tennis**. Pure HTML/CS
 
 **🎾 التنس** — نظام نقاط كامل (15/30/40/AD)، **Tie-break عند 6-6**، تبديل المرسل تلقائيًا (بما فيه الشوط الفاصل)، أفضل من 1/3/5 مجموعات، وضع No-Ad، سجل المجموعات وإعلان الفائز.
 
+## اللغة · Language
+
+عربي / English بزر واحد في أعلى الصفحة (يتذكّر اختيارك). الواجهة والمعلق الصوتي يتبدّلان معًا.
+Arabic / English with one button in the header (remembered). The UI and the commentator switch together.
+
 ## المعلق الصوتي · Commentator
 
-صوت ذكوري حماسي **ثابت في كل المتصفحات**: مقاطع صوتية جاهزة (`audio/`) تُركَّب في جمل، بدل صوت المتصفح.
+صوت ذكوري حماسي **ثابت في كل المتصفحات**: مقاطع صوتية جاهزة (`audio/ar`, `audio/en`) تُركَّب في جمل، بدل صوت المتصفح.
 يعلّق على الأهداف والبطاقات والأخطاء والأشواط والوقت المستقطع والإيقافات ونقاط التنس. يُشغَّل/يُوقَف بزر 🎙️ أو `V`.
 لإعادة توليد المقاطع أو تغيير الصوت: `pip install edge-tts && python tools/gen_voice.py` (الصوت الحالي `ar-SA-HamedNeural`).
 
