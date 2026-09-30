@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="description" content="جو وول — لوحة نتائج احترافية لكرة القدم وكرة اليد والتنس الأرضي، تعمل بدون إنترنت.">
+  <title>جو وول | Go Wall — لوحة نتائج متعددة الرياضات</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar no-tv">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">GO</div>
+      <div>
+        <h1>جو وول <small>GO WALL</small></h1>
+        <p>لوحة نتائج احترافية متعددة الرياضات</p>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="الرياضة">
+      <button role="tab" id="tab-football" data-action="sport" data-sport="football">⚽ <span>كرة القدم</span></button>
+      <button role="tab" id="tab-handball" data-action="sport" data-sport="handball">🤾 <span>كرة اليد</span></button>
+      <button role="tab" id="tab-tennis"   data-action="sport" data-sport="tennis">🎾 <span>التنس الأرضي</span></button>
+    </nav>
+
+    <div class="tools">
+      <button class="icon-btn" data-action="undo" title="تراجع (Z)" aria-label="تراجع">↶</button>
+      <button class="icon-btn" id="sound-btn" data-action="sound" title="الصوت (M)" aria-label="الصوت">🔊</button>
+      <button class="icon-btn" data-action="tv" title="وضع العرض (T)" aria-label="وضع العرض">📺</button>
+      <button class="icon-btn" data-action="fullscreen" title="ملء الشاشة (F)" aria-label="ملء الشاشة">⛶</button>
+      <button class="icon-btn" data-action="help" title="اختصارات (?)" aria-label="مساعدة">?</button>
+      <button class="btn danger sm" data-action="reset">↻ تصفير</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="panel-football" class="panel" aria-labelledby="tab-football"></section>
+    <section id="panel-handball" class="panel" aria-labelledby="tab-handball" hidden></section>
+    <section id="panel-tennis"   class="panel" aria-labelledby="tab-tennis" hidden></section>
+  </main>
+
+  <footer class="no-tv">
+    <span><b>Go Wall</b> · جو وول © 2026</span>
+    <span>يُحفظ كل شيء تلقائيًا على جهازك · اضغط <kbd>?</kbd> للاختصارات</span>
+  </footer>
+
+  <button class="tv-exit" data-action="tv" aria-label="الخروج من وضع العرض">✕ خروج</button>
+
+  <dialog id="modal"></dialog>
+  <div id="toasts" aria-live="polite"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
