@@ -128,17 +128,20 @@ function sound(kind) {
 
 /* ---------- Commentator (speech) ---------- */
 let arVoice = null;
+const MALE_AR = /hamed|naayf|naif|shakir|maged|majed|tarik|tareq|fahed|salem|omar|ahmed|hassan|male|رجل|ذكر/i;
+const FEMALE_AR = /zariyah|salma|laila|leila|hoda|zira|amina|hala|female|امرأة|أنثى/i;
 function pickVoice() {
   if (!('speechSynthesis' in window)) return;
   const vs = speechSynthesis.getVoices().filter(v => /^ar/i.test(v.lang));
-  const score = v => (/natural|neural|online/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 2 : 0) + (/hamed|naayf|shakir|maged|majed|tarik/i.test(v.name) ? 1 : 0) + (/ar-SA/i.test(v.lang) ? 1 : 0);
+  const score = v => (MALE_AR.test(v.name) ? 10 : 0) - (FEMALE_AR.test(v.name) ? 10 : 0)
+    + (/natural|neural|online/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 2 : 0) + (/ar-SA/i.test(v.lang) ? 1 : 0);
   arVoice = vs.sort((a, b) => score(b) - score(a))[0] || null;
 }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.addEventListener?.('voiceschanged', pickVoice); }
 
 const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
 /* urgent: cut off whatever is being said. Otherwise never let more than one line wait, so speech can't lag behind the game. */
-function say(text, urgent = false) {
+function say(text, urgent = false, hype = false) {
   if (!state.sound || !state.voice || !('speechSynthesis' in window)) return;
   try {
     const ss = speechSynthesis;
@@ -147,9 +150,10 @@ function say(text, urgent = false) {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ar-SA';
     if (arVoice) { u.voice = arVoice; u.lang = arVoice.lang; }
-    u.volume = 1;      // maximum
-    u.rate = 0.9;      // slightly slower = clearer
-    u.pitch = 1;
+    u.volume = 1;                   // maximum
+    // Male + energetic: deep base pitch, brisk pace; big moments go faster and higher-energy.
+    u.rate = hype ? 1.12 : 1.0;
+    u.pitch = hype ? 0.95 : 0.8;
     ss.resume();
     ss.speak(u);
   } catch { /* speech unavailable */ }
@@ -241,7 +245,7 @@ function tick() {
       run.hb = false;
       sound('buzzer');
       toast(h.half === 1 ? '🔔 انتهى الشوط الأول' : '🏁 انتهت المباراة');
-      say(h.half === 1 ? `انتهى الشوط الأول. النتيجة ${scoreLine('hb')}` : `صافرة النهاية! انتهت المباراة. النتيجة ${scoreLine('hb')}`, true);
+      say(h.half === 1 ? `انتهى الشوط الأول. النتيجة ${scoreLine('hb')}` : `صافرة النهاية! انتهت المباراة. النتيجة ${scoreLine('hb')}`, true, true);
       commit();
       return;
     }
@@ -287,7 +291,7 @@ function toggleClock() {
   if (run[sp]) {
     const fresh = sp === 'fb' ? state.fb.elapsed === FB_PERIODS[state.fb.period].start * 60000 : state.hb.remaining === HB_HALF;
     const half = sp === 'fb' ? FB_PERIODS[state.fb.period].name : (state.hb.half === 1 ? 'الشوط الأول' : 'الشوط الثاني');
-    say(fresh ? `صافرة البداية! انطلق ${half}` : 'استؤنف اللعب', true);
+    say(fresh ? `صافرة البداية! انطلق ${half}` : 'استؤنف اللعب', true, fresh);
   } else say('توقف اللعب');
   render();
 }
@@ -338,8 +342,8 @@ function announceGoal(sp, team, who) {
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
-  const shout = pickOne(['جووووووول!', 'هدف! هدف! هدف!', 'جووووول! يا له من هدف!']);
-  say(`${shout} ${who ? `هدف سجله ${who}، ` : ''}لصالح ${T.name}. النتيجة ${scoreLine(sp)}`, true);
+  const shout = pickOne(['جوووووووول! جوووووول!', 'هدف! هدف! هدف! يا سلام!', 'جووووول! يا له من هدف رائع!', 'يا إلهي! جوووووول!']);
+  say(`${shout} ${who ? `هدف سجله ${who}، ` : ''}لصالح ${T.name}. النتيجة ${scoreLine(sp)}`, true, true);
 }
 
 function setStat(sp, team, key, delta) {
@@ -356,8 +360,8 @@ function setStat(sp, team, key, delta) {
   sound('beep');
   if (delta > 0 && sp === 'fb') {
     if (key === 'fouls') say(pickOne([`خطأ على ${T.name}`, `صافرة الحكم، خطأ ضد ${T.name}`]));
-    else if (key === 'yellow') say(`بطاقة صفراء! إنذار للاعب من ${T.name}`, true);
-    else if (key === 'red') say(`بطاقة حمراء! طرد مباشر للاعب من ${T.name}. ${T.name} يكمل بنقص عددي`, true);
+    else if (key === 'yellow') say(`بطاقة صفراء! إنذار للاعب من ${T.name}`, true, true);
+    else if (key === 'red') say(`بطاقة حمراء! طرد مباشر للاعب من ${T.name}. ${T.name} يكمل بنقص عددي`, true, true);
   }
 }
 
@@ -466,11 +470,11 @@ function tnPoint(p) {
 
 function tnCommentary(p) {
   const t = state.tn, n = t.names;
-  if (t.winner !== null) { t._ev = null; return say(`انتهت المباراة! الفائز ${n[t.winner]}. مبروك`, true); }
-  if (t._ev) { const e = t._ev; t._ev = null; return say(e, true); }
+  if (t.winner !== null) { t._ev = null; return say(`انتهت المباراة! الفائز ${n[t.winner]}. مبروك`, true, true); }
+  if (t._ev) { const e = t._ev; t._ev = null; return say(e, true, true); }
   if (t.tiebreak) return say(`شوط فاصل. ${t.pts[0]} مقابل ${t.pts[1]}`);
   const a = tnLabel(0), b = tnLabel(1);
-  if (a === 'AD' || b === 'AD') return say(`أفضلية ${n[a === 'AD' ? 0 : 1]}`);
+  if (a === 'AD' || b === 'AD') return say(`أفضلية لـ ${n[a === 'AD' ? 0 : 1]}!`);
   if (t.pts[0] >= 3 && t.pts[0] === t.pts[1]) return say('تعادل، ديوس');
   say(`${n[p]} يسجل نقطة. ${a} مقابل ${b}`);
 }
