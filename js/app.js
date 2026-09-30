@@ -175,7 +175,7 @@ document.addEventListener('pointerdown', () => { ['goal_1', 'goal_2', 'goal_3', 
 function toast(msg) {
   const el = document.createElement('div');
   el.className = 'toast';
-  el.textContent = msg;
+  el.textContent = msg.replace(/[\u{1F000}-\u{1FAFF}\u2190-\u21FF\u2300-\u23FF\u2600-\u27BF\uFE0F]/gu, '').trim();
   $('#toasts').append(el);
   setTimeout(() => el.remove(), 2600);
 }
@@ -326,10 +326,10 @@ function setScore(sp, team, delta) {
 /* Commentator: ask for the scorer, then shout it on screen and out loud. */
 function askScorer(teamName) {
   return new Promise(resolve => {
-    const dlg = modal(`<form method="dialog"><h2>⚽ جووول!</h2><p>هدف لفريق <b>${esc(teamName)}</b> — من سجّل الهدف؟</p>
+    const dlg = modal(`<form method="dialog"><h2>جووول!</h2><p>هدف لفريق <b>${esc(teamName)}</b> — من سجّل الهدف؟</p>
       <input type="text" id="scorer-in" maxlength="30" placeholder="اسم اللاعب (اختياري)" dir="rtl" autofocus autocomplete="off"
         style="font:700 20px Cairo,sans-serif;letter-spacing:0">
-      <div class="actions"><button class="btn" value="skip" formnovalidate>تخطي</button><button class="btn go" value="ok">إعلان الهدف 📣</button></div></form>`);
+      <div class="actions"><button class="btn" value="skip" formnovalidate>تخطي</button><button class="btn go" value="ok">إعلان الهدف</button></div></form>`);
     dlg.onclose = () => resolve(dlg.returnValue === 'ok' ? $('#scorer-in', dlg).value.trim() : '');
   });
 }
@@ -349,7 +349,7 @@ function announceGoal(sp, team, who) {
   const line = `هدف سجله ${who || '----------'}`;
   let el = $('#goal-banner');
   if (!el) { el = document.createElement('div'); el.id = 'goal-banner'; el.setAttribute('role', 'alert'); document.body.append(el); }
-  el.style.setProperty('--tc', T.color);
+  el.dataset.side = team;
   el.innerHTML = `<div class="g-word">جووووول!</div><div class="g-line">${esc(line)}</div><div class="g-team">${esc(T.name)}</div>`;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
@@ -551,8 +551,8 @@ function render() {
     tab.setAttribute('aria-selected', String(s === sp));
     $(`#panel-${s}`).hidden = s !== sp;
   }
-  $('#voice-btn').style.opacity = state.voice ? 1 : .4;
-  $('#sound-btn').textContent = state.sound ? '🔊' : '🔇';
+  $('#voice-btn').classList.toggle('off', !state.voice);
+  $('#sound-btn').classList.toggle('off', !state.sound);
   document.title = `جو وول | ${state.sport === 'tennis' ? 'التنس' : state.sport === 'football' ? 'كرة القدم' : 'كرة اليد'}`;
 
   if (sp === 'football') $('#panel-football').innerHTML = footballHTML();
@@ -568,11 +568,10 @@ function render() {
 }
 
 function nameField(sp, i, T) {
-  return `<input class="name-input" data-name="${sp}" data-team="${i}" value="${esc(T.name)}" maxlength="24" aria-label="اسم الفريق ${i + 1}">
-    <label class="color-pick" title="لون الفريق"><input type="color" data-color="${sp}" data-team="${i}" value="${T.color}" aria-label="لون الفريق"></label>`;
+  return `<input class="name-input" data-name="${sp}" data-team="${i}" value="${esc(T.name)}" maxlength="24" aria-label="اسم الفريق ${i + 1}">`;
 }
 function stat(label, sp, i, key, value) {
-  return `<div class="stat">${label}
+  return `<div class="stat"><span class="lbl">${label}</span>
     <button class="mini" data-action="stat" data-sport="${sp}" data-team="${i}" data-key="${key}" data-delta="-1" aria-label="إنقاص">−</button>
     <b>${value}</b>
     <button class="mini" data-action="stat" data-sport="${sp}" data-team="${i}" data-key="${key}" data-delta="1" aria-label="زيادة">+</button></div>`;
@@ -582,7 +581,7 @@ function footballHTML() {
   const f = state.fb;
   const card = i => {
     const T = f.teams[i];
-    return `<article class="box team" style="--tc:${T.color}">
+    return `<article class="box team" data-side="${i}">
       <div class="team-head">${nameField('fb', i, T)}<span class="chip">${i === 0 ? 'صاحب الأرض' : 'الضيف'}</span></div>
       <div class="score" data-bump="fb-${i}">${T.score}</div>
       <div class="btn-row">
@@ -590,13 +589,13 @@ function footballHTML() {
         <button class="btn big" data-action="score" data-sport="fb" data-team="${i}" data-delta="-1">&lrm;−1</button>
       </div>
       <div class="stats">
-        ${stat('الأخطاء', 'fb', i, 'fouls', T.fouls)}
-        ${stat('<span class="card-y"></span>', 'fb', i, 'yellow', T.yellow)}
-        ${stat('<span class="card-r"></span>', 'fb', i, 'red', T.red)}
+        ${stat('أخطاء', 'fb', i, 'fouls', T.fouls)}
+        ${stat('إنذارات', 'fb', i, 'yellow', T.yellow)}
+        ${stat('طرد', 'fb', i, 'red', T.red)}
       </div></article>`;
   };
   const log = f.log.length
-    ? f.log.slice(0, 30).map(e => `<li style="--tc:${f.teams[e.team].color}"><b>${esc(e.label)}</b>${e.icon}<span>${esc(f.teams[e.team].name)}${e.who ? ' — ' + esc(e.who) : ''}</span></li>`).join('')
+    ? f.log.slice(0, 30).map(e => `<li data-side="${e.team}"><b>${esc(e.label)}</b><span><strong>${{ '⚽': 'هدف', '🟨': 'إنذار', '🟥': 'طرد' }[e.icon] || ''}</strong>${esc(f.teams[e.team].name)}${e.who ? ' — ' + esc(e.who) : ''}</span></li>`).join('')
     : '<span class="empty">لا توجد أحداث بعد</span>';
   return `
     <div class="box statusbar" style="--sc:var(--accent)">
@@ -606,7 +605,7 @@ function footballHTML() {
         <div class="clock-sub"><span>الوقت المنقضي</span><span class="extra" id="fb-extra"></span></div>
       </div>
       <div class="clock-ctl">
-        <button class="btn ${run.fb ? 'pause' : 'go'}" data-action="toggle">${run.fb ? '⏸ إيقاف' : '▶ بدء'}</button>
+        <button class="btn ${run.fb ? 'pause' : 'go'}" data-action="toggle">${run.fb ? 'إيقاف' : 'بدء'}</button>
         <button class="btn sm" data-action="nudge" data-min="-1">&lrm;−1 د</button>
         <button class="btn sm" data-action="nudge" data-min="1">&lrm;+1 د</button>
         <select class="sel" data-period aria-label="الشوط">
@@ -622,7 +621,7 @@ function handballHTML() {
   const h = state.hb;
   const card = i => {
     const T = h.teams[i];
-    return `<article class="box team" style="--tc:${T.color}">
+    return `<article class="box team" data-side="${i}">
       <div class="team-head">${nameField('hb', i, T)}<span class="pill">وقت مستقطع: <b>${T.timeouts}</b>/${HB_TIMEOUTS}</span></div>
       <div class="score" data-bump="hb-${i}">${T.score}</div>
       <div class="btn-row">
@@ -630,23 +629,23 @@ function handballHTML() {
         <button class="btn big" data-action="score" data-sport="hb" data-team="${i}" data-delta="-1">&lrm;−1</button>
       </div>
       <div class="row-2">
-        <button class="btn" data-action="hb-timeout" data-team="${i}" ${T.timeouts ? '' : 'disabled'}>⏱ وقت مستقطع</button>
-        <button class="btn danger" data-action="hb-penalty" data-team="${i}">🚫 إيقاف دقيقتين</button>
+        <button class="btn" data-action="hb-timeout" data-team="${i}" ${T.timeouts ? '' : 'disabled'}>وقت مستقطع</button>
+        <button class="btn danger" data-action="hb-penalty" data-team="${i}">إيقاف دقيقتين</button>
       </div>
       <div class="pens" id="pens-${i}"></div>
     </article>`;
   };
   return `
     <div class="box statusbar" style="--sc:var(--orange)">
-      <div class="period"><span class="dot ${run.hb ? 'live' : ''}"></span>كرة اليد — ${h.half === 1 ? 'الشوط الأول' : 'الشوط الثاني'}</div>
+      <div class="period"><span class="dot ${run.hb ? 'live' : ''}"></span>كرة اليد · ${h.half === 1 ? 'الشوط الأول' : 'الشوط الثاني'}</div>
       <div class="clock-wrap" data-action="edit-clock" title="اضغط لتعديل الوقت">
         <span class="clock" id="hb-clock">30:00</span>
         <div class="clock-sub"><span>الوقت المتبقي</span></div>
       </div>
       <div class="clock-ctl">
-        <button class="btn ${run.hb ? 'pause' : 'go'}" data-action="toggle">${run.hb ? '⏸ إيقاف' : '▶ بدء'}</button>
+        <button class="btn ${run.hb ? 'pause' : 'go'}" data-action="toggle">${run.hb ? 'إيقاف' : 'بدء'}</button>
         <button class="btn sm" data-action="hb-reset-half">إعادة 30د</button>
-        <button class="btn sm" data-action="hb-next-half" ${h.half >= 2 ? 'disabled' : ''}>الشوط التالي ⏭</button>
+        <button class="btn sm" data-action="hb-next-half" ${h.half >= 2 ? 'disabled' : ''}>الشوط التالي</button>
       </div>
     </div>
     <div class="grid2">${card(0)}${card(1)}</div>`;
@@ -663,8 +662,8 @@ function tennisHTML() {
     }).join('');
     const need = Math.ceil(t.bestOf / 2);
     const pips = t.bestOf > 1 ? `<div class="pips" title="المجموعات">${Array.from({ length: need }, (_, k) => `<span class="pip ${k < t.sets[i] ? 'on' : ''}"></span>`).join('')}</div>` : '';
-    return `<div class="tn-row ${serving ? 'serving' : ''}" style="--tc:${t.colors[i]}">
-      <button class="serve-btn ${serving ? 'on' : ''}" data-action="tn-server" data-p="${i}" title="المُرسِل" aria-label="تحديد المرسل">🎾</button>
+    return `<div class="tn-row ${serving ? 'serving' : ''}" data-side="${i}">
+      <button class="serve-btn ${serving ? 'on' : ''}" data-action="tn-server" data-p="${i}" title="المُرسِل" aria-label="تحديد المرسل">إرسال</button>
       <input class="name-input" data-tname="${i}" value="${esc(t.names[i])}" maxlength="24" aria-label="اسم اللاعب ${i + 1}">
       <div class="tn-sets">${sets}</div>
       <div class="tn-games" data-bump="tn-g${i}">${t.games[i]}</div>
@@ -673,14 +672,14 @@ function tennisHTML() {
     </div>`;
   };
   const head = `<div class="tn-head"><span></span><span>اللاعب</span><span>المجموعات</span><span>الأشواط</span><span>النقاط</span><span></span></div>`;
-  const banner = t.winner !== null ? `<div class="winner">🏆 ${esc(t.names[t.winner])} يفوز بالمباراة!</div>` : '';
-  const stateLabel = t.tiebreak ? '<span class="badge-tb">⚡ شوط فاصل (Tie-break)</span>' : '';
+  const banner = t.winner !== null ? `<div class="winner">${esc(t.names[t.winner])} يفوز بالمباراة.</div>` : '';
+  const stateLabel = t.tiebreak ? '<span class="badge-tb">شوط فاصل</span>' : '';
   return `
     <div class="box">
       <div class="tn-bar">
         <div class="period"><span class="dot live"></span>التنس الأرضي ${stateLabel}</div>
         <div class="tn-opts">
-          <span>المجموعة <b style="color:var(--green)">${Math.min(t.history.length + 1, 9)}</b></span>
+          <span>المجموعة <b>${Math.min(t.history.length + 1, 9)}</b></span>
           <label>أفضل من
             <select class="sel" data-bestof aria-label="عدد المجموعات">
               ${[1, 3, 5].map(n => `<option value="${n}" ${n === t.bestOf ? 'selected' : ''}>${n}</option>`).join('')}
@@ -692,7 +691,7 @@ function tennisHTML() {
       <div class="tn-board">${head}${row(0)}${row(1)}</div>
     </div>
     ${banner}
-    <p class="tn-caption">اضغط على 🎾 لتغيير المُرسِل · التبديل يتم تلقائيًا بعد كل شوط · الشوط الفاصل عند 6-6 حتى 7 بفارق نقطتين</p>`;
+    <p class="tn-caption">اضغط «إرسال» لتغيير المُرسِل · التبديل يتم تلقائيًا بعد كل شوط · الشوط الفاصل عند 6-6 حتى 7 بفارق نقطتين</p>`;
 }
 
 /* Cheap, targeted updates called every tick (no full re-render). */

@@ -3,41 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0f19">
-  <meta name="description" content="جو وول — لوحة نتائج احترافية لكرة القدم وكرة اليد والتنس الأرضي، تعمل بدون إنترنت.">
-  <title>جو وول | Go Wall — لوحة نتائج متعددة الرياضات</title>
+  <meta name="theme-color" content="#ece6d8">
+  <meta name="description" content="جو وول — لوحة نتائج للملاعب التي ليس فيها لوحة نتائج. كرة قدم، كرة يد، وتنس. بلا حساب، بلا تثبيت، وتعمل بلا إنترنت.">
+  <title>جو وول | لوحة نتائج للملاعب الصغيرة</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="topbar no-tv">
-    <div class="brand">
-      <div class="logo" aria-hidden="true">GO</div>
-      <div>
-        <h1>جو وول <small>GO WALL</small></h1>
-        <p>لوحة نتائج احترافية متعددة الرياضات</p>
+
+  <header class="mast no-tv">
+    <div class="mast-top">
+      <span class="mono">GO WALL — SCOREBOARD № 02</span>
+      <div class="tools">
+        <button class="tool" data-action="undo" title="تراجع (Z)">تراجع <kbd>Z</kbd></button>
+        <button class="tool" id="voice-btn" data-action="voice" title="المعلق الصوتي (V)">المعلق <kbd>V</kbd></button>
+        <button class="tool" id="sound-btn" data-action="sound" title="الصوت (M)">الصوت <kbd>M</kbd></button>
+        <button class="tool" data-action="tv" title="وضع العرض (T)">وضع العرض <kbd>T</kbd></button>
+        <button class="tool" data-action="fullscreen" title="ملء الشاشة (F)">ملء الشاشة <kbd>F</kbd></button>
+        <button class="tool" data-action="help" title="الاختصارات (?)">اختصارات <kbd>?</kbd></button>
+        <button class="tool warn" data-action="reset">تصفير</button>
       </div>
     </div>
 
-    <nav class="tabs" role="tablist" aria-label="الرياضة">
-      <button role="tab" id="tab-football" data-action="sport" data-sport="football">⚽ <span>كرة القدم</span></button>
-      <button role="tab" id="tab-handball" data-action="sport" data-sport="handball">🤾 <span>كرة اليد</span></button>
-      <button role="tab" id="tab-tennis"   data-action="sport" data-sport="tennis">🎾 <span>التنس الأرضي</span></button>
-    </nav>
-
-    <div class="tools">
-      <button class="icon-btn" data-action="undo" title="تراجع (Z)" aria-label="تراجع">↶</button>
-      <button class="icon-btn" id="voice-btn" data-action="voice" title="المعلق الصوتي (V)" aria-label="المعلق الصوتي">🎙️</button>
-      <button class="icon-btn" id="sound-btn" data-action="sound" title="الصوت (M)" aria-label="الصوت">🔊</button>
-      <button class="icon-btn" data-action="tv" title="وضع العرض (T)" aria-label="وضع العرض">📺</button>
-      <button class="icon-btn" data-action="fullscreen" title="ملء الشاشة (F)" aria-label="ملء الشاشة">⛶</button>
-      <button class="icon-btn" data-action="help" title="اختصارات (?)" aria-label="مساعدة">?</button>
-      <button class="btn danger sm" data-action="reset">↻ تصفير</button>
+    <div class="mast-main">
+      <h1>جو<span>وول</span></h1>
+      <p class="lede">لوحة نتائج للملاعب التي ليس فيها لوحة نتائج.<br>
+        ساعة، أهداف، بطاقات، إيقافات — على هاتف واحد، بلا حساب وبلا إنترنت.</p>
     </div>
+
+    <nav class="index" role="tablist" aria-label="الرياضة">
+      <button role="tab" id="tab-football" data-action="sport" data-sport="football"><i>01</i><b>كرة القدم</b><em>٤٥ + ٤٥ دقيقة · بدل ضائع · بطاقات</em></button>
+      <button role="tab" id="tab-handball" data-action="sport" data-sport="handball"><i>02</i><b>كرة اليد</b><em>٣٠ × ٢ تنازلي · إيقاف دقيقتين</em></button>
+      <button role="tab" id="tab-tennis"   data-action="sport" data-sport="tennis"><i>03</i><b>التنس الأرضي</b><em>شوط فاصل · إرسال تلقائي · ١/٣/٥</em></button>
+    </nav>
   </header>
 
   <main>
@@ -46,12 +48,32 @@
     <section id="panel-tennis"   class="panel" aria-labelledby="tab-tennis" hidden></section>
   </main>
 
+  <section class="notes no-tv" aria-labelledby="notes-title">
+    <div class="notes-head">
+      <span class="mono">ملاحظات الميدان</span>
+      <h2 id="notes-title">صُمّمت لتُستخدم<br>والصافرة في فمك.</h2>
+    </div>
+    <ol class="notes-list">
+      <li><b>0</b><p><strong>حسابات أو تثبيتات.</strong> افتح الصفحة واضغط بدء. كل شيء يُحفظ على جهازك، وتبقى النتيجة إن أُغلق المتصفح.</p></li>
+      <li><b>80</b><p><strong>خطوة تراجع.</strong> ضغطت هدفًا للفريق الخطأ؟ اضغط <kbd>Z</kbd>. الساعة لا تتأثر.</p></li>
+      <li><b>2:00</b><p><strong>إيقاف اليد يعدّ مع ساعة اللعب فقط.</strong> يتوقف حين تتوقف المباراة، ويستمر عبر الاستراحة.</p></li>
+      <li><b>6–6</b><p><strong>التنس يعرف القاعدة.</strong> شوط فاصل إلى سبع نقاط بفارق نقطتين، والإرسال يتبدّل بالدور دون أن تلمسه.</p></li>
+      <li><b>1</b><p><strong>صوت واحد للمعلق</strong> في كل متصفح: مقاطع مسجّلة مسبقًا لا تتغيّر بتغيّر الجهاز.</p></li>
+    </ol>
+    <table class="keys" aria-label="اختصارات لوحة المفاتيح">
+      <tr><th><kbd>Space</kbd></th><td>تشغيل / إيقاف الساعة</td></tr>
+      <tr><th><kbd>1</kbd> <kbd>2</kbd></th><td>هدف أو نقطة للأول / للثاني — <kbd>Shift</kbd> للإنقاص</td></tr>
+      <tr><th><kbd>Z</kbd></th><td>تراجع</td></tr>
+      <tr><th><kbd>T</kbd></th><td>وضع العرض على الشاشة الكبيرة</td></tr>
+    </table>
+  </section>
+
   <footer class="no-tv">
-    <span><b>Go Wall</b> · جو وول © 2026</span>
-    <span>يُحفظ كل شيء تلقائيًا على جهازك · اضغط <kbd>?</kbd> للاختصارات</span>
+    <span class="mono">GO WALL · © 2026</span>
+    <span>مفتوح المصدر · يعمل بلا خادم · <a href="https://github.com/HaidarAli147/go-wall">GitHub</a></span>
   </footer>
 
-  <button class="tv-exit" data-action="tv" aria-label="الخروج من وضع العرض">✕ خروج</button>
+  <button class="tv-exit" data-action="tv" aria-label="الخروج من وضع العرض">خروج ✕</button>
 
   <dialog id="modal"></dialog>
   <div id="toasts" aria-live="polite"></div>
