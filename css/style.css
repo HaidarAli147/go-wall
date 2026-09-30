@@ -258,3 +258,15 @@ body.tv .name-input { pointer-events: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 @media print { .no-tv, .tv-exit { display: none !important; } body { background: #fff; color: #000; } }
+
+/* ---------- Goal banner ---------- */
+#goal-banner {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-content: center; text-align: center; gap: 10px; padding: 24px;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--tc, #00f0ff) 45%, #000c), #000e 80%);
+  opacity: 0; pointer-events: none; transform: scale(1.1); transition: opacity .25s, transform .25s;
+}
+#goal-banner.show { opacity: 1; pointer-events: auto; transform: none; cursor: pointer; }
+.g-word { font-weight: 900; font-size: clamp(64px, 18vw, 220px); line-height: 1; color: #fff; text-shadow: 0 0 40px var(--tc, #00f0ff), 0 0 90px var(--tc, #00f0ff); }
+#goal-banner.show .g-word { animation: bump .6s ease-out; }
+.g-line { font-weight: 900; font-size: clamp(26px, 6vw, 64px); color: #fff; }
+.g-team { font-weight: 700; font-size: clamp(18px, 3vw, 32px); color: var(--tc, #00f0ff); }

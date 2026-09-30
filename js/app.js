@@ -264,7 +264,47 @@ function setScore(sp, team, delta) {
       else { const i = state.fb.log.findIndex(e => e.icon === '⚽' && e.team === team); if (i >= 0) state.fb.log.splice(i, 1); }
     }
   });
-  if (delta > 0) sound('goal');
+  if (delta > 0) goalFlow(sp, team);
+}
+
+/* Commentator: ask for the scorer, then shout it on screen and out loud. */
+function askScorer(teamName) {
+  return new Promise(resolve => {
+    const dlg = modal(`<form method="dialog"><h2>⚽ جووول!</h2><p>هدف لفريق <b>${esc(teamName)}</b> — من سجّل الهدف؟</p>
+      <input type="text" id="scorer-in" maxlength="30" placeholder="اسم اللاعب (اختياري)" dir="rtl" autofocus autocomplete="off"
+        style="font:700 20px Cairo,sans-serif;letter-spacing:0">
+      <div class="actions"><button class="btn" value="skip" formnovalidate>تخطي</button><button class="btn go" value="ok">إعلان الهدف 📣</button></div></form>`);
+    dlg.onclose = () => resolve(dlg.returnValue === 'ok' ? $('#scorer-in', dlg).value.trim() : '');
+  });
+}
+async function goalFlow(sp, team) {
+  sound('goal');
+  const T = state[sp].teams[team];
+  const who = await askScorer(T.name);
+  if (sp === 'fb' && who) {
+    const entry = state.fb.log.find(e => e.icon === '⚽' && e.team === team && !e.who);
+    if (entry) { entry.who = who; commit(); }
+  }
+  announceGoal(T, who);
+}
+let goalTimer = 0;
+function announceGoal(T, who) {
+  const line = `هدف سجله ${who || '----------'}`;
+  let el = $('#goal-banner');
+  if (!el) { el = document.createElement('div'); el.id = 'goal-banner'; el.setAttribute('role', 'alert'); document.body.append(el); }
+  el.style.setProperty('--tc', T.color);
+  el.innerHTML = `<div class="g-word">جووووول!</div><div class="g-line">${esc(line)}</div><div class="g-team">${esc(T.name)}</div>`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(goalTimer);
+  goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
+  if (state.sound && 'speechSynthesis' in window) {
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(who ? `جووووول! هدف سجله ${who}` : 'جووووول!');
+      u.lang = 'ar-SA'; u.rate = 0.95; u.pitch = 1.1;
+      speechSynthesis.speak(u);
+    } catch { /* speech unavailable */ }
+  }
 }
 
 function setStat(sp, team, key, delta) {
@@ -481,7 +521,7 @@ function footballHTML() {
       </div></article>`;
   };
   const log = f.log.length
-    ? f.log.slice(0, 30).map(e => `<li style="--tc:${f.teams[e.team].color}"><b>${esc(e.label)}</b>${e.icon}<span>${esc(f.teams[e.team].name)}</span></li>`).join('')
+    ? f.log.slice(0, 30).map(e => `<li style="--tc:${f.teams[e.team].color}"><b>${esc(e.label)}</b>${e.icon}<span>${esc(f.teams[e.team].name)}${e.who ? ' — ' + esc(e.who) : ''}</span></li>`).join('')
     : '<span class="empty">لا توجد أحداث بعد</span>';
   return `
     <div class="box statusbar" style="--sc:var(--accent)">
@@ -707,6 +747,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
+document.addEventListener('click', e => { if (e.target.closest('#goal-banner')) e.target.closest('#goal-banner').classList.remove('show'); });
 window.addEventListener('pagehide', saveNow);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); else lastTick = performance.now(); });
 
