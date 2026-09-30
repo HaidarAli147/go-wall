@@ -553,7 +553,7 @@ function tnCommentary(p) {
   if (t._ev) { const e = t._ev; t._ev = null; return speak([...e, pickOne(['nice_1', 'nice_2', 'nice_3'])], true); }
   if (t.tiebreak) return speak(['tb', NUM(t.pts[0]), 'vs', NUM(t.pts[1])]);
   const a = tnLabel(0), b = tnLabel(1);
-  if (a === 'AD' || b === 'AD') return speak(['adv', P(a === 'AD' ? 0 : 1)]);
+  if (a === 'AD' || b === 'AD') return speak([`adv_${P(a === 'AD' ? 0 : 1)}`]);
   if (t.pts[0] >= 3 && t.pts[0] === t.pts[1]) return speak(['deuce']);
   speak([P(p), 'scores_point', NUM(+a), 'vs', NUM(+b), ...(Math.random() < 0.45 ? [pickOne(['nice_1', 'nice_2', 'nice_3'])] : [])]);
 }
