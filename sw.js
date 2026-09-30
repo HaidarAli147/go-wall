@@ -1,5 +1,5 @@
 /* Network-first with offline fallback: always fresh when online, still works at the pitch without signal. */
-const CACHE = 'gowall-v6';
+const CACHE = 'gowall-v7';
 const ASSETS = ['./', 'index.html', 'css/style.css', 'js/app.js', 'logo.png', 'favicon.png', 'icon-192.png', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())));

@@ -323,7 +323,7 @@ function tick() {
       run.hb = false;
       sound('buzzer');
       toast(h.half === 1 ? L('انتهى الشوط الأول') : L('انتهت المباراة'));
-      speak([h.half === 1 ? 'half_end' : 'match_end', ...scoreSeq('hb')], true);
+      speak([h.half === 1 ? 'half_end' : 'match_end', ...scoreSeq('hb'), h.half === 1 ? 'well_played' : 'gg'], true);
       commit();
       return;
     }
@@ -368,7 +368,7 @@ function toggleClock() {
   sound(run[sp] ? 'whistle' : 'beep');
   if (run[sp]) {
     const fresh = sp === 'fb' ? state.fb.elapsed === FB_PERIODS[state.fb.period].start * 60000 : state.hb.remaining === HB_HALF;
-    speak(fresh ? ['kick_off', sp === 'fb' ? `period_${state.fb.period}` : `period_${state.hb.half - 1}`] : ['resume'], true);
+    speak(fresh ? ['kick_off', sp === 'fb' ? `period_${state.fb.period}` : `period_${state.hb.half - 1}`, 'kick_extra'] : [pickOne(['resume', 'resume_2'])], true);
   } else speak(['paused']);
   render();
 }
@@ -419,7 +419,10 @@ function announceGoal(sp, team, who) {
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
-  speak([pickOne(['goal_1', 'goal_2', 'goal_3', 'goal_4']), 'goal_for', TEAM(team), 'score_is', ...scoreSeq(sp)], true);
+  const trailing = state[sp].teams[team].score < state[sp].teams[1 - team].score;
+  const opp = state[sp].teams[1 - team].score < state[sp].teams[team].score;
+  speak([pickOne(['goal_1', 'goal_2', 'goal_3', 'goal_4']), 'goal_for', TEAM(team), 'score_is', ...scoreSeq(sp),
+    ...(Math.random() < 0.35 && opp ? ['cheer_conceded'] : [pickOne(['cheer_1', 'cheer_2', 'cheer_3', 'cheer_4'])])], true);
 }
 
 function setStat(sp, team, key, delta) {
@@ -435,7 +438,7 @@ function setStat(sp, team, key, delta) {
   });
   sound('beep');
   if (delta > 0 && sp === 'fb') {
-    if (key === 'fouls') speak([pickOne(['foul_on', 'foul_ref']), TEAM(team)]);
+    if (key === 'fouls') speak([pickOne(['foul_on', 'foul_ref']), TEAM(team), ...(Math.random() < 0.5 ? ['foul_c'] : [])]);
     else if (key === 'yellow') speak(['yellow', TEAM(team)], true);
     else if (key === 'red') speak(['red', TEAM(team), 'red_after'], true);
   }
@@ -477,7 +480,7 @@ function hbTimeout(team) {
   mutate(() => { T.timeouts--; });
   run.hb = false;
   sound('whistle');
-  speak(['timeout', TEAM(team), 'left', NUM(state.hb.teams[team].timeouts)], true);
+  speak(['timeout', TEAM(team), 'left', NUM(state.hb.teams[team].timeouts), 'timeout_c'], true);
   render();
 }
 function hbPenalty(team) {
@@ -546,13 +549,13 @@ function tnPoint(p) {
 
 function tnCommentary(p) {
   const t = state.tn, P = i => 'p' + (i + 1);
-  if (t.winner !== null) { t._ev = null; return speak(['match_over', P(t.winner), 'congrats'], true); }
-  if (t._ev) { const e = t._ev; t._ev = null; return speak(e, true); }
+  if (t.winner !== null) { t._ev = null; return speak(['match_over', P(t.winner), 'congrats', 'gg'], true); }
+  if (t._ev) { const e = t._ev; t._ev = null; return speak([...e, pickOne(['nice_1', 'nice_2', 'nice_3'])], true); }
   if (t.tiebreak) return speak(['tb', NUM(t.pts[0]), 'vs', NUM(t.pts[1])]);
   const a = tnLabel(0), b = tnLabel(1);
   if (a === 'AD' || b === 'AD') return speak(['adv', P(a === 'AD' ? 0 : 1)]);
   if (t.pts[0] >= 3 && t.pts[0] === t.pts[1]) return speak(['deuce']);
-  speak([P(p), 'scores_point', NUM(+a), 'vs', NUM(+b)]);
+  speak([P(p), 'scores_point', NUM(+a), 'vs', NUM(+b), ...(Math.random() < 0.45 ? [pickOne(['nice_1', 'nice_2', 'nice_3'])] : [])]);
 }
 
 function tnWinGame(p) {

@@ -79,6 +79,21 @@ CLIPS = {
     'set_for': ('المجموعة لصالح', 'Set to', 1),
     'match_over': ('انتهت المباراة! الفائز', 'Game, set and match! The winner is', 1),
     'congrats': ('مبروك!', 'Congratulations!', 1),
+    # --- encouragement: makes the commentator cheer the players on ---
+    'cheer_1': ('الله الله! استمروا يا أبطال!', "Incredible! Keep it up, champions!", 1),
+    'cheer_2': ('ما شاء الله عليكم! أداء رائع!', 'Brilliant stuff! What a performance!', 1),
+    'cheer_3': ('هكذا تكون كرة القدم! الجمهور يقف تصفيقًا!', 'That is why we love this game! The crowd is on its feet!', 1),
+    'cheer_4': ('يا سلام على هذا الحماس! زيدوها يا رجال!', 'What energy! Come on, give us more!', 1),
+    'cheer_conceded': ('لا تستسلموا! الأمل موجود، ارفعوا رؤوسكم وعودوا للمباراة!', "Don't give up! Heads up, there is still plenty of time to come back!", 1),
+    'nice_1': ('ضربة رائعة!', 'What a shot!', 1),
+    'nice_2': ('أحسنت! لعب جميل!', 'Well played! Beautiful play!', 1),
+    'nice_3': ('مستوى عالٍ! واصل يا بطل!', 'High quality! Keep going, champ!', 1),
+    'foul_c': ('العبوا بروح رياضية يا شباب!', 'Keep it clean, play fair, lads!', 0),
+    'resume_2': ('هيا نكمل! أرونا مهارتكم!', "Let's go! Show us your skills!", 1),
+    'timeout_c': ('التقطوا أنفاسكم، ركّزوا، وعودوا أقوى!', 'Catch your breath, stay focused and come back stronger!', 1),
+    'kick_extra': ('هيا يا أبطال! نريد مباراة ممتعة!', "Let's go, champions! Give us a great match!", 1),
+    'well_played': ('أداء رائع من الفريقين!', 'Great effort from both teams!', 1),
+    'gg': ('مباراة ممتعة! شكرًا لكم يا أبطال، وإلى اللقاء!', 'What a match! Thank you, champions, see you next time!', 1),
 }
 for n in range(0, 61):
     CLIPS[f'n{n}'] = (number_ar(n), number_en(n), 0)
@@ -89,7 +104,7 @@ async def make(lang, cid, text, hype, sem):
     if os.path.exists(path):
         return
     async with sem:
-        rate, pitch = ('+18%', '+4Hz') if hype else ('+6%', '+0Hz')
+        rate, pitch = ('+24%', '+7Hz') if hype else ('+12%', '+3Hz')   # lively, upbeat delivery
         for attempt in range(4):
             try:
                 await edge_tts.Communicate(text, VOICES[lang], rate=rate, pitch=pitch, volume='+0%').save(path)
