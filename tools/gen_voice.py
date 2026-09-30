@@ -16,13 +16,16 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'audio')
 
 ONES_AR = ['صِفْر', 'وَاحِد', 'اثْنَان', 'ثَلَاثَة', 'أَرْبَعَة', 'خَمْسَة', 'سِتَّة', 'سَبْعَة', 'ثَمَانِيَة', 'تِسْعَة', 'عَشَرَة',
            'أَحَدَ عَشَر', 'اثْنَا عَشَر', 'ثَلَاثَةَ عَشَر', 'أَرْبَعَةَ عَشَر', 'خَمْسَةَ عَشَر', 'سِتَّةَ عَشَر', 'سَبْعَةَ عَشَر', 'ثَمَانِيَةَ عَشَر', 'تِسْعَةَ عَشَر']
-TENS_AR = {20: 'عِشْرُون', 30: 'ثَلَاثُون', 40: 'أَرْبَعُون', 50: 'خَمْسُون', 60: 'سِتُّون'}
+TENS_AR = {20: 'عِشْرُون', 30: 'ثَلَاثُون', 40: 'أَرْبَعُون', 50: 'خَمْسُون', 60: 'سِتُّون', 70: 'سَبْعُون', 80: 'ثَمَانُون', 90: 'تِسْعُون'}
 ONES_EN = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
            'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
-TENS_EN = {20: 'twenty', 30: 'thirty', 40: 'forty', 50: 'fifty', 60: 'sixty'}
+TENS_EN = {20: 'twenty', 30: 'thirty', 40: 'forty', 50: 'fifty', 60: 'sixty', 70: 'seventy', 80: 'eighty', 90: 'ninety'}
 
 
 def number_ar(n):
+    if n >= 100:
+        r = n - 100
+        return 'مِئَة' if r == 0 else f'مِئَة و{number_ar(r)}'
     if n < 20:
         return ONES_AR[n]
     t, o = n // 10 * 10, n % 10
@@ -30,6 +33,9 @@ def number_ar(n):
 
 
 def number_en(n):
+    if n >= 100:
+        r = n - 100
+        return 'one hundred' if r == 0 else f'one hundred and {number_en(r)}'
     if n < 20:
         return ONES_EN[n]
     t, o = n // 10 * 10, n % 10
@@ -95,7 +101,39 @@ CLIPS = {
     'well_played': ('أداء رائع من الفريقين!', 'Great effort from both teams!', 1),
     'gg': ('مباراة ممتعة! شكرًا لكم يا أبطال، وإلى اللقاء!', 'What a match! Thank you, champions, see you next time!', 1),
 }
+# --- context-aware + ambient commentary (ar, en, hype) ---
+CLIPS.update({
+    'in_min': ('فِي الدَّقِيقَة', 'in minute', 1),
+    'first_goal': ('', 'The deadlock is broken! The first goal of the match!', 1),
+    'equalizer': ('', "It's level! We are right back in this game!", 1),
+    'comeback': ('', 'What a comeback! This match has been turned upside down!', 1),
+    'takes_lead': ('', 'They take the lead! What a moment!', 1),
+    'extends': ('', 'They extend the lead! Total control out there!', 1),
+    'pulls_back': ('', 'They pull one back! Hope is alive!', 1),
+    'late_goal': ('', 'A goal right at the death! The tension is unbearable!', 1),
+    'amb_1': ('', 'Both teams trading attacks! What an exciting match!', 0),
+    'amb_2': ('', 'The ball is in midfield and the tempo is high!', 0),
+    'amb_3': ('', 'Organised defending and a search for the breakthrough!', 0),
+    'amb_4': ('', "What a contest! Don't take your eyes off this one!", 0),
+    'amb_5': ('', 'The support from the stands never stops!', 0),
+    'amb_6': ('', "The game is heating up, we could see a goal at any moment!", 0),
+    'amb_7': ('', 'Great pressing from both sides, nobody is giving an inch!', 0),
+})
 AR = {
+    'first_goal': 'انْفَتَحَ بَابُ التَّسْجِيل! أَوَّلُ هَدَفٍ فِي المُبَارَاة!',
+    'equalizer': 'تَعَادَلَ الفَرِيقَان! عَادَتِ المُبَارَاةُ مِنْ جَدِيد!',
+    'comeback': 'عَوْدَةٌ مُذْهِلَة! انْقَلَبَتِ المُبَارَاةُ رَأْسًا عَلَى عَقِب!',
+    'takes_lead': 'يَتَقَدَّم! يَا لَهَا مِنْ لَحْظَة!',
+    'extends': 'يَزِيدُ الفَارِق! سَيْطَرَةٌ تَامَّةٌ فِي المَلْعَب!',
+    'pulls_back': 'يُقَلِّصُ الفَارِق! الأَمَلُ يَعُود!',
+    'late_goal': 'هَدَفٌ فِي الوَقْتِ القَاتِل! أَعْصَابٌ مَشْدُودَة!',
+    'amb_1': 'الفَرِيقَانِ يَتَبَادَلَانِ الهَجَمَات! مُبَارَاةٌ حَمَاسِيَّة!',
+    'amb_2': 'الكُرَةُ فِي وَسَطِ المَلْعَب، وَالإِيقَاعُ سَرِيع!',
+    'amb_3': 'دِفَاعٌ مُنَظَّمٌ وَمُحَاوَلَاتٌ لِاخْتِرَاقِ الخُطُوط!',
+    'amb_4': 'يَا لَهَا مِنْ مُبَارَاةٍ مُثِيرَة! لَا تَرْفَعُوا أَعْيُنَكُم!',
+    'amb_5': 'التَّشْجِيعُ مِنَ المُدَرَّجَاتِ لَا يَتَوَقَّف!',
+    'amb_6': 'اللَّعِبُ يَزْدَادُ سُخُونَة! قَدْ يَأْتِي الهَدَفُ فِي أَيِّ لَحْظَة!',
+    'amb_7': 'ضَغْطٌ رَائِعٌ مِنَ الطَّرَفَيْن، وَلَا أَحَدَ يَتَنَازَلُ عَنْ شِبْر!',
     'goal_1': 'جُوووووول! جُوووووول! مَا شَاءَ الله!',
     'goal_2': 'هَدَف! هَدَف! هَدَفٌ رَائِع! يَا سَلَام!',
     'goal_3': 'جُوووووول! يَا لَهُ مِنْ هَدَفٍ جَمِيل!',
@@ -154,7 +192,7 @@ AR = {
 }
 CLIPS['adv_p1'] = ('', 'Advantage, Player One!', 1)
 CLIPS['adv_p2'] = ('', 'Advantage, Player Two!', 1)
-for n in range(0, 61):
+for n in range(0, 121):
     CLIPS[f'n{n}'] = (number_ar(n), number_en(n), 0)
 
 

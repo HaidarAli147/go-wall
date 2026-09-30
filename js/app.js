@@ -186,6 +186,15 @@ function sound(kind) {
     else if (kind === 'goal') { tone(660, 0.14, 'triangle', .16); tone(880, 0.14, 'triangle', .16, .14); tone(1100, 0.3, 'triangle', .16, .28); }
     else if (kind === 'whistle') tone(2600, 0.45, 'triangle', .22, 0, 1900);
     else if (kind === 'buzzer') tone(180, 1.1, 'sawtooth', .18);
+    else if (kind === 'roar') {           // synthesised stadium crowd: shaped noise swell
+      const len = actx.sampleRate * 4, nb = actx.createBuffer(1, len, actx.sampleRate), d = nb.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < len; i++) { last = (last + (Math.random() * 2 - 1) * 0.12) * 0.985; d[i] = last * 3; }
+      const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain(), t = actx.currentTime;
+      src.buffer = nb; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.5;
+      g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(0.28, t + 0.5); g.gain.exponentialRampToValueAtTime(0.001, t + 3.8);
+      src.connect(bp).connect(g).connect(actx.destination); src.start(t);
+    }
   } catch { /* audio blocked until first gesture */ }
 }
 
@@ -193,48 +202,72 @@ function sound(kind) {
    One fixed male voice for every browser: pre-recorded clips (audio/*.mp3, made by tools/gen_voice.py)
    chained into sentences, instead of each browser's own text-to-speech. */
 const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
-const clipUrls = {};
+/* Clips are decoded with Web Audio, trimmed of their leading/trailing silence and scheduled
+   back-to-back, so chained phrases flow like one sentence. Loudness is boosted and compressed. */
+let vctx = null, vgain = null, speechGen = 0, pending = null, speaking = false, activeSources = [];
+function voiceCtx() {
+  if (!vctx) {
+    vctx = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = vctx.createDynamicsCompressor();
+    comp.threshold.value = -18; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.15;
+    vgain = vctx.createGain(); vgain.gain.value = 1.9;
+    vgain.connect(comp); comp.connect(vctx.destination);
+  }
+  if (vctx.state === 'suspended') vctx.resume();
+  return vctx;
+}
+const clipCache = {};
 function clip(id) {
   const key = `${state.lang}/${id}`;
-  return clipUrls[key] || (clipUrls[key] = fetch(`audio/${key}.mp3`)
-    .then(r => { if (!r.ok) throw new Error(id); return r.blob(); })
-    .then(b => URL.createObjectURL(b)));
+  return clipCache[key] || (clipCache[key] = fetch(`audio/${key}.mp3`)
+    .then(r => { if (!r.ok) throw new Error(key); return r.arrayBuffer(); })
+    .then(ab => voiceCtx().decodeAudioData(ab))
+    .then(buf => {
+      const d = buf.getChannelData(0), th = 0.015;
+      let i = 0, j = d.length - 1;
+      while (i < j && Math.abs(d[i]) < th) i++;
+      while (j > i && Math.abs(d[j]) < th) j--;
+      const from = Math.max(0, i / buf.sampleRate - 0.02), to = Math.min(buf.duration, j / buf.sampleRate + 0.06);
+      return { buf, from, dur: Math.max(0.05, to - from) };
+    })
+    .catch(() => { delete clipCache[key]; return null; }));
 }
-const voiceAudio = new Audio();
-voiceAudio.volume = 1;
-let speechGen = 0, pending = null;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function playSequence(ids, gen) {
-  for (const id of ids) {
-    if (gen !== speechGen) return;
-    try {
-      voiceAudio.src = await clip(id);
-      if (gen !== speechGen) return;
-      await new Promise(res => {
-        voiceAudio.onended = voiceAudio.onerror = res;
-        voiceAudio.play().catch(res);
-      });
-    } catch { /* missing clip: skip it */ }
+  const parts = await Promise.all(ids.map(clip));
+  if (gen !== speechGen) return;
+  const ctx = voiceCtx();
+  let t = ctx.currentTime + 0.04;
+  activeSources = [];
+  for (const c of parts) {
+    if (!c) continue;
+    const src = ctx.createBufferSource();
+    src.buffer = c.buf; src.connect(vgain);
+    src.start(t, c.from, c.dur);
+    activeSources.push(src);
+    t += c.dur + 0.035;                       // a natural breath between phrases
   }
+  await sleep(Math.max(0, (t - ctx.currentTime) * 1000));
   if (gen === speechGen) { speaking = false; if (pending) { const n = pending; pending = null; startSpeech(n); } }
 }
-let speaking = false;
-function startSpeech(ids, urgent) {
-  speaking = true;
-  playSequence(ids, ++speechGen);
-}
+function startSpeech(ids) { speaking = true; playSequence(ids, ++speechGen); }
+function cutSpeech() { activeSources.forEach(s => { try { s.stop(); } catch { /* already ended */ } }); activeSources = []; }
 /* urgent: cut off whatever is being said. Otherwise wait for the current line; only the newest waiting line is kept. */
 function speak(ids, urgent = false) {
   if (!state.sound || !state.voice) return;
-  if (urgent || !speaking) { pending = null; voiceAudio.pause(); startSpeech(ids); }
+  if (urgent || !speaking) { pending = null; cutSpeech(); startSpeech(ids); }
   else pending = ids;
 }
-function stopSpeech() { speechGen++; pending = null; speaking = false; voiceAudio.pause(); }
-const NUM = n => 'n' + Math.max(0, Math.min(60, n | 0));
+function stopSpeech() { speechGen++; pending = null; speaking = false; cutSpeech(); }
+const NUM = n => 'n' + Math.max(0, Math.min(120, n | 0));
 const TEAM = i => 't' + (i + 1);
 const scoreSeq = sp => { const [a, b] = state[sp].teams; return ['t1', NUM(a.score), 't2', NUM(b.score)]; };
 // Warm the cache after the first tap (browsers block audio until then anyway).
-document.addEventListener('pointerdown', () => { ['goal_1', 'goal_2', 'goal_3', 'goal_4', 'goal_for', 'score_is', 't1', 't2', 'vs', 'kick_off', 'yellow', 'red'].forEach(clip); for (let i = 0; i <= 12; i++) clip(NUM(i)); }, { once: true });
+const PRELOAD = ['goal_1', 'goal_2', 'goal_3', 'goal_4', 'goal_for', 'score_is', 't1', 't2', 'vs', 'in_min', 'kick_off', 'yellow', 'red',
+  'first_goal', 'equalizer', 'comeback', 'takes_lead', 'extends', 'pulls_back', 'late_goal', 'cheer_1', 'cheer_2', 'cheer_3', 'cheer_4', 'cheer_conceded',
+  'p1', 'p2', 'scores_point', 'nice_1', 'nice_2', 'nice_3', 'amb_1', 'amb_2', 'amb_3', 'amb_4', 'amb_5', 'amb_6', 'amb_7'];
+document.addEventListener('pointerdown', () => { voiceCtx(); PRELOAD.forEach(clip); for (let i = 0; i <= 45; i++) clip(NUM(i)); }, { once: true });
 
 function toast(msg) {
   const el = document.createElement('div');
@@ -294,12 +327,15 @@ function showHelp() {
 let lastTick = performance.now();
 const fbNotified = { period: -1 };
 
+let ambientIn = 90000;
 function tick() {
   const now = performance.now();
   const dt = now - lastTick;
   lastTick = now;
 
   if (run.fb) {
+    ambientIn -= dt;
+    if (ambientIn <= 0) { ambientIn = 75000 + Math.random() * 75000; speak([pickOne(['amb_1', 'amb_2', 'amb_3', 'amb_4', 'amb_5', 'amb_6', 'amb_7'])]); }
     const f = state.fb, p = FB_PERIODS[f.period];
     const before = f.elapsed;
     f.elapsed += dt;
@@ -419,10 +455,23 @@ function announceGoal(sp, team, who) {
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
-  const trailing = state[sp].teams[team].score < state[sp].teams[1 - team].score;
-  const opp = state[sp].teams[1 - team].score < state[sp].teams[team].score;
-  speak([pickOne(['goal_1', 'goal_2', 'goal_3', 'goal_4']), 'goal_for', TEAM(team), 'score_is', ...scoreSeq(sp),
-    ...(Math.random() < 0.35 && opp ? ['cheer_conceded'] : [pickOne(['cheer_1', 'cheer_2', 'cheer_3', 'cheer_4'])])], true);
+  sound('roar');
+  const me = state[sp].teams[team].score, them = state[sp].teams[1 - team].score, before = me - 1;
+  const minute = Math.min(120, Math.floor(state.fb.elapsed / 60000) + 1);
+  const late = sp === 'fb' && minute >= 85 && state.fb.period >= 1 && minute <= 95;
+  let ctx = null;
+  if (sp === 'fb' && me + them === 1) ctx = 'first_goal';
+  else if (me === them && them >= 2 && before <= them - 2) ctx = 'comeback';
+  else if (me === them) ctx = 'equalizer';
+  else if (before === them) ctx = 'takes_lead';
+  else if (me < them) ctx = 'pulls_back';
+  else if (me - them >= 2) ctx = 'extends';
+  if (late && ctx !== 'first_goal') ctx = 'late_goal';
+  speak([pickOne(['goal_1', 'goal_2', 'goal_3', 'goal_4']), 'goal_for', TEAM(team),
+    ...(sp === 'fb' ? ['in_min', NUM(minute)] : []),
+    'score_is', ...scoreSeq(sp),
+    ...(ctx ? [ctx] : [pickOne(['cheer_1', 'cheer_2', 'cheer_3', 'cheer_4'])]),
+    ...(ctx && Math.random() < 0.5 ? [me < them || ctx === 'pulls_back' ? 'cheer_conceded' : pickOne(['cheer_1', 'cheer_2', 'cheer_3', 'cheer_4'])] : [])], true);
 }
 
 function setStat(sp, team, key, delta) {
