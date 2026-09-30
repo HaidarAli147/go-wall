@@ -1,5 +1,5 @@
 /* Network-first with offline fallback: always fresh when online, still works at the pitch without signal. */
-const CACHE = 'gowall-v2';
+const CACHE = 'gowall-v3';
 const ASSETS = ['./', 'index.html', 'css/style.css', 'js/app.js', 'icon.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())));
@@ -10,7 +10,7 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
     fetch(e.request)
-      .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res; })
+      .then(res => { if (res.status === 200) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return res; })
       .catch(() => caches.match(e.request))
   );
 });
