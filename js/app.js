@@ -35,6 +35,7 @@ function defaults() {
   return {
     sport: 'football',
     sound: true,
+    voice: true,
     fb: { teams: [newTeam('الفريق الأول', '#00f0ff'), newTeam('الفريق الثاني', '#ff2d6f')], period: 0, elapsed: 0, log: [] },
     hb: { teams: [newTeam('فريق اليد أ', '#ff6a00'), newTeam('فريق اليد ب', '#00c2ff')], half: 1, remaining: HB_HALF, pens: [[], []] },
     tn: newTennis(),
@@ -63,7 +64,7 @@ function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
     if (!saved || typeof saved !== 'object') return base;
-    for (const k of ['sport', 'sound']) if (k in saved) base[k] = saved[k];
+    for (const k of ['sport', 'sound', 'voice']) if (k in saved) base[k] = saved[k];
     for (const k of ['fb', 'hb', 'tn']) if (saved[k]) base[k] = { ...base[k], ...saved[k] };
   } catch { /* corrupted or unavailable storage: start fresh */ }
   return base;
@@ -124,6 +125,36 @@ function sound(kind) {
     else if (kind === 'buzzer') tone(180, 1.1, 'sawtooth', .18);
   } catch { /* audio blocked until first gesture */ }
 }
+
+/* ---------- Commentator (speech) ---------- */
+let arVoice = null;
+function pickVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const vs = speechSynthesis.getVoices().filter(v => /^ar/i.test(v.lang));
+  const score = v => (/natural|neural|online/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 2 : 0) + (/hamed|naayf|shakir|maged|majed|tarik/i.test(v.name) ? 1 : 0) + (/ar-SA/i.test(v.lang) ? 1 : 0);
+  arVoice = vs.sort((a, b) => score(b) - score(a))[0] || null;
+}
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.addEventListener?.('voiceschanged', pickVoice); }
+
+const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
+/* urgent: cut off whatever is being said. Otherwise never let more than one line wait, so speech can't lag behind the game. */
+function say(text, urgent = false) {
+  if (!state.sound || !state.voice || !('speechSynthesis' in window)) return;
+  try {
+    const ss = speechSynthesis;
+    if (urgent) ss.cancel();
+    else if (ss.speaking && ss.pending) ss.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ar-SA';
+    if (arVoice) { u.voice = arVoice; u.lang = arVoice.lang; }
+    u.volume = 1;      // maximum
+    u.rate = 0.9;      // slightly slower = clearer
+    u.pitch = 1;
+    ss.resume();
+    ss.speak(u);
+  } catch { /* speech unavailable */ }
+}
+const scoreLine = sp => { const [a, b] = state[sp].teams; return `${a.name} ${a.score}، ${b.name} ${b.score}`; };
 
 function toast(msg) {
   const el = document.createElement('div');
@@ -195,6 +226,7 @@ function tick() {
       fbNotified.period = f.period;
       sound('whistle');
       toast('⏱ انتهى الوقت الأصلي — بدأ الوقت المحتسب بدل الضائع');
+      say(`انتهى الوقت الأصلي من ${p.name}. الحكم يحتسب وقتًا بدل ضائع`, true);
     }
     updateFbClock();
   }
@@ -203,28 +235,30 @@ function tick() {
     const h = state.hb;
     h.remaining -= dt;
     const expired = expirePenalties();
+    expired.forEach(i => say(`انتهى إيقاف اللاعب، ويعود إلى الملعب في ${h.teams[i].name}`));
     if (h.remaining <= 0) {
       h.remaining = 0;
       run.hb = false;
       sound('buzzer');
       toast(h.half === 1 ? '🔔 انتهى الشوط الأول' : '🏁 انتهت المباراة');
+      say(h.half === 1 ? `انتهى الشوط الأول. النتيجة ${scoreLine('hb')}` : `صافرة النهاية! انتهت المباراة. النتيجة ${scoreLine('hb')}`, true);
       commit();
       return;
     }
-    if (expired) sound('beep');
+    if (expired.length) sound('beep');
     updateHbClock();
     renderPenalties();
   }
 }
 
 function expirePenalties() {
-  const h = state.hb; let any = false;
-  h.pens = h.pens.map(list => {
+  const h = state.hb, back = [];
+  h.pens = h.pens.map((list, i) => {
     const keep = list.filter(endsAt => h.remaining > endsAt);
-    if (keep.length !== list.length) any = true;
+    for (let k = keep.length; k < list.length; k++) back.push(i);
     return keep;
   });
-  return any;
+  return back;
 }
 
 /* Setting the handball clock keeps each suspension's remaining duration intact. */
@@ -250,6 +284,11 @@ function toggleClock() {
   run[sp] = !run[sp];
   lastTick = performance.now();
   sound(run[sp] ? 'whistle' : 'beep');
+  if (run[sp]) {
+    const fresh = sp === 'fb' ? state.fb.elapsed === FB_PERIODS[state.fb.period].start * 60000 : state.hb.remaining === HB_HALF;
+    const half = sp === 'fb' ? FB_PERIODS[state.fb.period].name : (state.hb.half === 1 ? 'الشوط الأول' : 'الشوط الثاني');
+    say(fresh ? `صافرة البداية! انطلق ${half}` : 'استؤنف اللعب', true);
+  } else say('توقف اللعب');
   render();
 }
 function pauseAll() { run.fb = run.hb = false; }
@@ -265,6 +304,7 @@ function setScore(sp, team, delta) {
     }
   });
   if (delta > 0) goalFlow(sp, team);
+  else say(`تم تعديل النتيجة. ${scoreLine(sp)}`);
 }
 
 /* Commentator: ask for the scorer, then shout it on screen and out loud. */
@@ -285,10 +325,11 @@ async function goalFlow(sp, team) {
     const entry = state.fb.log.find(e => e.icon === '⚽' && e.team === team && !e.who);
     if (entry) { entry.who = who; commit(); }
   }
-  announceGoal(T, who);
+  announceGoal(sp, team, who);
 }
 let goalTimer = 0;
-function announceGoal(T, who) {
+function announceGoal(sp, team, who) {
+  const T = state[sp].teams[team];
   const line = `هدف سجله ${who || '----------'}`;
   let el = $('#goal-banner');
   if (!el) { el = document.createElement('div'); el.id = 'goal-banner'; el.setAttribute('role', 'alert'); document.body.append(el); }
@@ -297,14 +338,8 @@ function announceGoal(T, who) {
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(goalTimer);
   goalTimer = setTimeout(() => el.classList.remove('show'), 6000);
-  if (state.sound && 'speechSynthesis' in window) {
-    try {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(who ? `جووووول! هدف سجله ${who}` : 'جووووول!');
-      u.lang = 'ar-SA'; u.rate = 0.95; u.pitch = 1.1;
-      speechSynthesis.speak(u);
-    } catch { /* speech unavailable */ }
-  }
+  const shout = pickOne(['جووووووول!', 'هدف! هدف! هدف!', 'جووووول! يا له من هدف!']);
+  say(`${shout} ${who ? `هدف سجله ${who}، ` : ''}لصالح ${T.name}. النتيجة ${scoreLine(sp)}`, true);
 }
 
 function setStat(sp, team, key, delta) {
@@ -319,6 +354,11 @@ function setStat(sp, team, key, delta) {
     }
   });
   sound('beep');
+  if (delta > 0 && sp === 'fb') {
+    if (key === 'fouls') say(pickOne([`خطأ على ${T.name}`, `صافرة الحكم، خطأ ضد ${T.name}`]));
+    else if (key === 'yellow') say(`بطاقة صفراء! إنذار للاعب من ${T.name}`, true);
+    else if (key === 'red') say(`بطاقة حمراء! طرد مباشر للاعب من ${T.name}. ${T.name} يكمل بنقص عددي`, true);
+  }
 }
 
 function setPeriod(i) {
@@ -328,6 +368,7 @@ function setPeriod(i) {
   fbNotified.period = -1;
   run.fb = false;
   sound('beep');
+  say(`استعدوا. ${FB_PERIODS[i].name}`);
   commit();
 }
 function nudgeFb(min) {
@@ -356,11 +397,13 @@ function hbTimeout(team) {
   mutate(() => { T.timeouts--; });
   run.hb = false;
   sound('whistle');
+  say(`وقت مستقطع، ${state.hb.teams[team].name}. بقي لديه ${state.hb.teams[team].timeouts}`, true);
   render();
 }
 function hbPenalty(team) {
   mutate(() => state.hb.pens[team].push(state.hb.remaining - HB_PENALTY));
   sound('beep');
+  say(`إيقاف لمدة دقيقتين للاعب في ${state.hb.teams[team].name}`, true);
 }
 function hbRemovePenalty(team, idx) {
   mutate(() => state.hb.pens[team].splice(idx, 1));
@@ -374,6 +417,7 @@ function hbNextHalf() {
   h.half = 2;
   h.remaining = HB_HALF;
   sound('beep');
+  say('استراحة بين الشوطين. استعدوا للشوط الثاني');
   commit();
 }
 function hbResetHalf() {
@@ -417,6 +461,18 @@ function tnPoint(p) {
   }
   sound('beep');
   commit();
+  tnCommentary(p);
+}
+
+function tnCommentary(p) {
+  const t = state.tn, n = t.names;
+  if (t.winner !== null) { t._ev = null; return say(`انتهت المباراة! الفائز ${n[t.winner]}. مبروك`, true); }
+  if (t._ev) { const e = t._ev; t._ev = null; return say(e, true); }
+  if (t.tiebreak) return say(`شوط فاصل. ${t.pts[0]} مقابل ${t.pts[1]}`);
+  const a = tnLabel(0), b = tnLabel(1);
+  if (a === 'AD' || b === 'AD') return say(`أفضلية ${n[a === 'AD' ? 0 : 1]}`);
+  if (t.pts[0] >= 3 && t.pts[0] === t.pts[1]) return say('تعادل، ديوس');
+  say(`${n[p]} يسجل نقطة. ${a} مقابل ${b}`);
 }
 
 function tnWinGame(p) {
@@ -425,9 +481,11 @@ function tnWinGame(p) {
   t.pts = [0, 0];
   t.server = 1 - t.server;
   sound('whistle');
+  t._ev = `الشوط لصالح ${t.names[p]}. الأشواط ${t.games[0]} مقابل ${t.games[1]}`;
   if (t.games[p] >= 6 && t.games[p] - t.games[o] >= 2) return tnFinishSet(p, false);
   if (t.games[0] === 6 && t.games[1] === 6) {
     t.tiebreak = true; t.tbStart = t.server; t.tbCount = 0;
+    t._ev = 'ستة أشواط لكل لاعب. نلجأ إلى الشوط الفاصل';
   }
 }
 
@@ -442,6 +500,7 @@ function tnFinishSet(p, viaTiebreak) {
   if (viaTiebreak) t.server = 1 - t.tbStart;
   t.tiebreak = false; t.tbCount = 0;
   sound('goal');
+  t._ev = `المجموعة لصالح ${t.names[p]}، ${entry.g[0]} مقابل ${entry.g[1]}`;
   if (t.sets[p] >= Math.ceil(t.bestOf / 2)) {
     t.winner = p;
     toast(`🏆 ${t.names[p]} يفوز بالمباراة`);
@@ -477,6 +536,7 @@ function render() {
     tab.setAttribute('aria-selected', String(s === sp));
     $(`#panel-${s}`).hidden = s !== sp;
   }
+  $('#voice-btn').style.opacity = state.voice ? 1 : .4;
   $('#sound-btn').textContent = state.sound ? '🔊' : '🔇';
   document.title = `جو وول | ${state.sport === 'tennis' ? 'التنس' : state.sport === 'football' ? 'كرة القدم' : 'كرة اليد'}`;
 
@@ -681,6 +741,7 @@ const actions = {
   sport: d => switchSport(d.sport),
   undo,
   sound: () => { state.sound = !state.sound; commit(); if (state.sound) sound('beep'); },
+  voice: () => { state.voice = !state.voice; if (!state.voice && 'speechSynthesis' in window) speechSynthesis.cancel(); commit(); toast(state.voice ? '🎙️ المعلق يعمل' : '🎙️ المعلق متوقف'); say('المعلق يعمل الآن', true); },
   tv: toggleTv,
   fullscreen: toggleFullscreen,
   help: showHelp,
@@ -739,6 +800,7 @@ document.addEventListener('keydown', e => {
   else if (code === 'KeyT') toggleTv();
   else if (code === 'KeyF') toggleFullscreen();
   else if (code === 'KeyM') actions.sound();
+  else if (code === 'KeyV') actions.voice();
   else if (e.key === '?' || e.key === '؟' || code === 'Slash') showHelp();
   else if (code === 'Digit1' || code === 'Digit2') {
     const i = code === 'Digit1' ? 0 : 1;
